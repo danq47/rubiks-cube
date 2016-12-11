@@ -108,48 +108,45 @@ class Cube:
         else:
             print("invalid face to move to")
 
-# this method maps out all the transformations we need to make for the edges attached to the face we're rotating
+# this method maps out all the transformations we need to make for the edges attached to the face we're rotating clockwise
     def associated_sides(self,f):
-        if f is self.front: #done
+        if f is self.front: # checked
             tmp = list(self.upper[2]) # Need to put this as a list so that changing upper[2] doesn't change tmp
             self.upper[2] = self.left[:,2][::-1] # returns each element that is a multiple of -1 i.e. -1, -2, -3 ... the whole list reversed!
             self.left[:,2] = self.down[0]
             self.down[0] = self.right[:,0][::-1]
             self.right[:,0] = tmp
-        elif f is self.upper: #done
+        elif f is self.upper: # checked
             tmp = list(self.front[0])
             self.front[0] = self.right[0]
             self.right[0] = self.back[0]
             self.back[0] = self.left[0]
             self.left[0] = tmp
-        elif f is self.left:
+        elif f is self.left: # checked
             tmp = list(self.front[:,0])
-            self.front[:,0] = self.down[:,0]
-            # self.down[:,0] = 
-
-
-            self.front[0] = self.right[0]
-            self.right[0] = self.back[0]
-            self.back[0] = self.left[0]
-            self.left[0] = tmp
-        elif f is self.down:
-            tmp = list(self.front[0])
-            self.front[0] = self.right[0]
-            self.right[0] = self.back[0]
-            self.back[0] = self.left[0]
-            self.left[0] = tmp
-        elif f is self.right:
-            tmp = list(self.front[0])
-            self.front[0] = self.right[0]
-            self.right[0] = self.back[0]
-            self.back[0] = self.left[0]
-            self.left[0] = tmp
+            self.front[:,0] = self.upper[:,0]
+            self.upper[:,0] = self.back[:,2][::-1]
+            self.back[:,2][::-1] = self.down[:,0]
+            self.down[:,0] = tmp
+        elif f is self.down: # checked
+            tmp = list(self.front[2])
+            self.front[2] = self.left[2]
+            self.left[2] = self.back[2]
+            self.back[2] = self.right[2]
+            self.right[2] = tmp
+        elif f is self.right: # checked
+            tmp = list(self.front[:,2])
+            self.front[:,2] = self.down[:,2]
+            self.down[:,2] = self.back[:,0][::-1]
+            self.back[:,0][::-1] = self.upper[:,2]
+            self.upper[:,2] = tmp
         elif f is self.back:
-            tmp = list(self.front[0])
-            self.front[0] = self.right[0]
-            self.right[0] = self.back[0]
-            self.back[0] = self.left[0]
-            self.left[0] = tmp
+            tmp = list(self.right[:,2])
+            self.right[:,2] = self.down[2][::-1]
+            self.down[2] = self.left[:,0]
+            self.left[:,0] = self.upper[0][::-1]
+            self.upper[0] = tmp
+
 
 # This method ties them all in together. Clockwise can be either 1 or 0 (yes or no)
 
@@ -168,12 +165,64 @@ class Cube:
             self.sides_clockwise(f)
             self.associated_sides(f)
 
+    def F(self):
+        self.rotate_face(1,self.front)
+
+    def U(self):
+        self.rotate_face(1,self.upper)
+    
+    def D(self):
+        self.rotate_face(1,self.down)
+    
+    def R(self):
+        self.rotate_face(1,self.right)
+
+    def L(self):
+        self.rotate_face(1,self.left)
+
+    def B(self):
+        self.rotate_face(1,self.back)
+
+
+
+    def f(self):
+        self.turn_cube(self.front)
+
+    def u(self):
+        self.turn_cube(self.upper)
+    
+    def d(self):
+        self.turn_cube(self.down)
+    
+    def r(self):
+        self.turn_cube(self.right)
+
+    def l(self):
+        self.turn_cube(self.left)
+
+    def b(self):
+        self.turn_cube(self.back)
+
 x = Cube()
+y = Cube()
+z = Cube()
+
+x.B()
+x.b()
+y.b()
+y.F()
+
+z.print_cube()
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+x.print_cube()
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+y.print_cube()
+
 
 # # print(x.upper)
-x.print_cube()
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-x.R()
-x.print_cube()
+# x.print_cube()
+# print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+# x.R()
+# x.print_cube()
 
 # print(x.upper[:,2])
