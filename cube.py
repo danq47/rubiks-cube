@@ -30,15 +30,17 @@ class Cube:
         2:self.front, 3:self.right, 4:self.back, 5:self.down }
     
     def print_cube(self):
-        print("                  ",self.upper[0])
-        print("                  ",self.upper[1])
-        print("                  ",self.upper[2])
+        print("               ",self.upper[0])
+        print("               ",self.upper[1])
+        print("               ",self.upper[2])
+        print("")
         print(self.left[0]," ",self.front[0]," ",self.right[0]," ",self.back[0])
         print(self.left[1]," ",self.front[1]," ",self.right[1]," ",self.back[1])
         print(self.left[2]," ",self.front[2]," ",self.right[2]," ",self.back[2])
-        print("                  ",self.down[0])
-        print("                  ",self.down[1])
-        print("                  ",self.down[2])
+        print("")
+        print("               ",self.down[0])
+        print("               ",self.down[1])
+        print("               ",self.down[2])
 
 # methods which rotate corners and sides of a face
 # called by self.corners_clockwise(self.front)
@@ -164,16 +166,70 @@ class Cube:
             self.associated_sides(f)
 
     def scramble(self):
-        number_of_moves = rand.randint(20,40) # scramble the cube a random number of moves
+        number_of_moves = rand.randint(30,100) # scramble the cube a random number of moves
         for _ in range(number_of_moves):
             clockwise = rand.randint(0,1)
             moves = [self.upper, self.down, self.front, self.left, self.right, self.back]
             self.move(clockwise, rand.choice(moves) )
+
+
+class Cube2:
+# going to try represent the cube as a 3x3x3 array with piece positions, and colour positions
+# i.e. we could have the (x,y,z) = (0,1,0) piece which would have colour (cx,cy,cz) = (R,0,G)
+# 2x2x2 case
+# positions [ [ [0,1], [0,1]], [ [0,1], [0,1] ] ]
+# 3x3x3 case positions
+    def __init__(self):
+        line = [x for x in range(0,3)]
+        face = [line,line,line]
+        cube = [face,face,face]
+        colours = cube
+        for i in range(0,3):
+            for j in range(0,3):
+                for k in range(0,3):
+
+                    if i == 0:
+                        cx = 1
+                    elif i == 1:
+                        cx = 0
+                    elif i == 2:
+                        cx = 6
+
+                    if j == 0:
+                        cy = 2
+                    elif j == 1:
+                        cy = 0
+                    elif j == 2:
+                        cy = 5
+
+                    if k == 0:
+                        cz = 3
+                    elif k == 1:
+                        cz = 0
+                    elif k == 2:
+                        cz = 4
+
+                    colours[i][j][k] = [cx,cy,cz]
+
+        colours = np.array(colours) # This is an array that contains all the colours, now we need to fill them all in
+        print(colours)
+
+        # # colours[0,0,0] = [1,2,3]
+        # print(colours[0,0,0,0])
+        # # self.positions = np.array([x for x in range(0,3)])
+        # print(cube)
+
+
+
+
 # Now that we've made the cube we can try to solve it
+# 0. Find a specific piece
 
+# 1. Make a cross
 
+    # def make_cross(self):
 
-
-x = Cube()
-x.scramble()
-x.print_cube()
+x = Cube2()
+# x.scramble()
+# x.move(1,x.front)
+# x.print_cube()
