@@ -149,10 +149,7 @@ class Cube:
 
 
 # This method ties them all in together. Clockwise can be either 1 or 0 (yes or no)
-
-# just turn the face, so don't move any of the joined edge pieces
-
-    def rotate_face(self,clockwise,f):
+    def move(self,clockwise,f):
 # here we define an anticlockwise rotation as 3 clockwise rotations
         if clockwise == 1:
                 n = 1
@@ -165,64 +162,7 @@ class Cube:
             self.sides_clockwise(f)
             self.associated_sides(f)
 
-    def F(self):
-        self.rotate_face(1,self.front)
-
-    def U(self):
-        self.rotate_face(1,self.upper)
-    
-    def D(self):
-        self.rotate_face(1,self.down)
-    
-    def R(self):
-        self.rotate_face(1,self.right)
-
-    def L(self):
-        self.rotate_face(1,self.left)
-
-    def B(self):
-        self.rotate_face(1,self.back)
-
-
-
-    def f(self):
-        self.turn_cube(self.front)
-
-    def u(self):
-        self.turn_cube(self.upper)
-    
-    def d(self):
-        self.turn_cube(self.down)
-    
-    def r(self):
-        self.turn_cube(self.right)
-
-    def l(self):
-        self.turn_cube(self.left)
-
-    def b(self):
-        self.turn_cube(self.back)
 
 x = Cube()
-y = Cube()
-z = Cube()
-
-x.B()
-x.b()
-y.b()
-y.F()
-
-z.print_cube()
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+x.move(1,x.upper)
 x.print_cube()
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-y.print_cube()
-
-
-# # print(x.upper)
-# x.print_cube()
-# print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-# x.R()
-# x.print_cube()
-
-# print(x.upper[:,2])
