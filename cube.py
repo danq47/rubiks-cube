@@ -1,4 +1,5 @@
 import numpy as np
+import random as rand
 
 class Cube:
 
@@ -11,18 +12,18 @@ class Cube:
         # self.right  = np.array([[25,26,27],[28,"R",29],[30,31,32]])
         # self.back   = np.array([[33,34,35],[36,"B",37],[38,39,40]])
         # self.down   = np.array([[41,42,43],[44,"D",45],[46,47,48]])
-        # self.upper  = np.array([["U","U","U"],["U","U","U"],["U","U","U"]])
-        # self.left   = np.array([["L","L","L"],["L","L","L"],["L","L","L"]])
-        # self.front  = np.array([["F","F","F"],["F","F","F"],["F","F","F"]])
-        # self.right  = np.array([["R","R","R"],["R","R","R"],["R","R","R"]])
-        # self.back   = np.array([["B","B","B"],["B","B","B"],["B","B","B"]])
-        # self.down   = np.array([["D","D","D"],["D","D","D"],["D","D","D"]])
-        self.upper  = np.array([["U1","U2","U3"],["U8","U0","U4"],["U7","U6","U5"]])
-        self.left   = np.array([["L1","L2","L3"],["L8","L0","L4"],["L7","L6","L5"]])
-        self.front  = np.array([["F1","F2","F3"],["F8","F0","F4"],["F7","F6","F5"]])
-        self.right  = np.array([["R1","R2","R3"],["R8","R0","R4"],["R7","R6","R5"]])
-        self.back   = np.array([["B1","B2","B3"],["B8","B0","B4"],["B7","B6","B5"]])
-        self.down   = np.array([["D1","D2","D3"],["D8","D0","D4"],["D7","D6","D5"]])
+        self.upper  = np.array([["U","U","U"],["U","U","U"],["U","U","U"]])
+        self.left   = np.array([["L","L","L"],["L","L","L"],["L","L","L"]])
+        self.front  = np.array([["F","F","F"],["F","F","F"],["F","F","F"]])
+        self.right  = np.array([["R","R","R"],["R","R","R"],["R","R","R"]])
+        self.back   = np.array([["B","B","B"],["B","B","B"],["B","B","B"]])
+        self.down   = np.array([["D","D","D"],["D","D","D"],["D","D","D"]])
+        # self.upper  = np.array([["U1","U2","U3"],["U8","U0","U4"],["U7","U6","U5"]])
+        # self.left   = np.array([["L1","L2","L3"],["L8","L0","L4"],["L7","L6","L5"]])
+        # self.front  = np.array([["F1","F2","F3"],["F8","F0","F4"],["F7","F6","F5"]])
+        # self.right  = np.array([["R1","R2","R3"],["R8","R0","R4"],["R7","R6","R5"]])
+        # self.back   = np.array([["B1","B2","B3"],["B8","B0","B4"],["B7","B6","B5"]])
+        # self.down   = np.array([["D1","D2","D3"],["D8","D0","D4"],["D7","D6","D5"]])
         self.cube = np.array([self.upper,self.left,self.front,self.right,self.back,self.down])
 # make a dictionary to make move functions which can operate on different faces        
         self.which_face = { 0:self.upper, 1:self.left,
@@ -162,7 +163,17 @@ class Cube:
             self.sides_clockwise(f)
             self.associated_sides(f)
 
+    def scramble(self):
+        number_of_moves = rand.randint(20,40) # scramble the cube a random number of moves
+        for _ in range(number_of_moves):
+            clockwise = rand.randint(0,1)
+            moves = [self.upper, self.down, self.front, self.left, self.right, self.back]
+            self.move(clockwise, rand.choice(moves) )
+# Now that we've made the cube we can try to solve it
+
+
+
 
 x = Cube()
-x.move(1,x.upper)
+x.scramble()
 x.print_cube()
