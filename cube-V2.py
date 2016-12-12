@@ -5,6 +5,9 @@ class Cube:
 # individual cubie by cube[x,y,z]. This will return us a colour vector [cx,cy,cz]
 # which tells us the colour in the x,y,z directions (numbered
 # 1-6, and 0 for no colour, as in the cx colour on the upper face)
+# A minus sign for colour means that it is facing in the negative i direction
+# The cube is sitting with the [0,0,0] cube at the origin in the xyz positive octant
+
 # Only issue so far is it's unclear how this corresponds to a solved/unsolved cube
 # it's not clear to see. Maybe we can just have a mapping to our old way of showing this
     def __init__(self):
@@ -21,25 +24,28 @@ class Cube:
                 for z in range(0,3):
 
                     if x == 0:
-                        self.cube[x,y,z,0] = 1
+                        self.cube[x,y,z,0] = -1
                     elif x == 1:
                         self.cube[x,y,z,0] = 0
                     elif x == 2:
                         self.cube[x,y,z,0] = 6
 
                     if y == 0:
-                        self.cube[x,y,z,1] = 2
+                        self.cube[x,y,z,1] = -2
                     elif y == 1:
                         self.cube[x,y,z,1] = 0
                     elif y == 2:
                         self.cube[x,y,z,1] = 5
 
                     if z == 0:
-                        self.cube[x,y,z,2] = 3
+                        self.cube[x,y,z,2] = -3
                     elif z == 1:
                         self.cube[x,y,z,2] = 0
                     elif z == 2:
                         self.cube[x,y,z,2] = 4
+
+# TODO - write some kind of method to print the cube in a 
+
 
 
 c = Cube()
