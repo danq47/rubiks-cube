@@ -1,45 +1,46 @@
 import numpy as np
 
 class Cube:
-# going to try represent the cube as a 3x3x3 array with piece positions, and colour positions
-# i.e. we could have the (x,y,z) = (0,1,0) piece which would have colour (cx,cy,cz) = (R,0,G)
-# 2x2x2 case
-# positions [ [ [[cx,cy,cz],[cx,xy,cz]], [0,1]], [ [0,1], [0,1] ] ]
-# 3x3x3 case positions
-
+# We will represent the cube as a numpy array where we can access each
+# individual cubie by cube[x,y,z]. This will return us a colour vector [cx,cy,cz]
+# which tells us the colour in the x,y,z directions (numbered
+# 1-6, and 0 for no colour, as in the cx colour on the upper face)
+# Only issue so far is it's unclear how this corresponds to a solved/unsolved cube
+# it's not clear to see. Maybe we can just have a mapping to our old way of showing this
     def __init__(self):
-        cubie_colour = [0,0,0]
-        line = [cubie_colour,cubie_colour,cubie_colour]
-        face = [line,line,line]
-        cube = [face,face,face]
+        self.cubie_colour = [0,0,0] # this will be the colour vector at each cubie point, start it off empty (as zeros)
+        self.line = [self.cubie_colour,self.cubie_colour,self.cubie_colour]
+        self.face = [self.line,self.line,self.line] 
+        self.cube = [self.face,self.face,self.face] # build up the cube
 
-        cube = np.array(cube)
+        self.cube = np.array(self.cube) # np array is easier to navigate
 
+# next we need to set the colour vectors
         for x in range(0,3):
             for y in range(0,3):
                 for z in range(0,3):
 
                     if x == 0:
-                        cube[x,y,z,0] = 1
+                        self.cube[x,y,z,0] = 1
                     elif x == 1:
-                        cube[x,y,z,0] = 0
+                        self.cube[x,y,z,0] = 0
                     elif x == 2:
-                        cube[x,y,z,0] = 6
+                        self.cube[x,y,z,0] = 6
 
                     if y == 0:
-                        cube[x,y,z,1] = 2
+                        self.cube[x,y,z,1] = 2
                     elif y == 1:
-                        cube[x,y,z,1] = 0
+                        self.cube[x,y,z,1] = 0
                     elif y == 2:
-                        cube[x,y,z,1] = 5
+                        self.cube[x,y,z,1] = 5
 
                     if z == 0:
-                        cube[x,y,z,2] = 3
+                        self.cube[x,y,z,2] = 3
                     elif z == 1:
-                        cube[x,y,z,2] = 0
+                        self.cube[x,y,z,2] = 0
                     elif z == 2:
-                        cube[x,y,z,2] = 4
+                        self.cube[x,y,z,2] = 4
 
-        print(cube[1,0,1])
 
 c = Cube()
+print(c.cube[1,1,0])
