@@ -173,61 +173,8 @@ class Cube:
             self.move(clockwise, rand.choice(moves) )
 
 
-class Cube2:
-# going to try represent the cube as a 3x3x3 array with piece positions, and colour positions
-# i.e. we could have the (x,y,z) = (0,1,0) piece which would have colour (cx,cy,cz) = (R,0,G)
-# 2x2x2 case
-# positions [ [ [0,1], [0,1]], [ [0,1], [0,1] ] ]
-# 3x3x3 case positions
-    def __init__(self):
-        line = [x for x in range(0,3)]
-        face = [line,line,line]
-        cube = [face,face,face]
-        colours = cube
-        for i in range(0,3):
-            for j in range(0,3):
-                for k in range(0,3):
-
-                    if i == 0:
-                        cx = 1
-                    elif i == 1:
-                        cx = 0
-                    elif i == 2:
-                        cx = 6
-
-                    if j == 0:
-                        cy = 2
-                    elif j == 1:
-                        cy = 0
-                    elif j == 2:
-                        cy = 5
-
-                    if k == 0:
-                        cz = 3
-                    elif k == 1:
-                        cz = 0
-                    elif k == 2:
-                        cz = 4
-
-                    colours[i][j][k] = [cx,cy,cz]
-
-        colours = np.array(colours) # This is an array that contains all the colours, now we need to fill them all in
-        print(colours)
-
-        # # colours[0,0,0] = [1,2,3]
-        # print(colours[0,0,0,0])
-        # # self.positions = np.array([x for x in range(0,3)])
-        # print(cube)
 
 
-
-
-# Now that we've made the cube we can try to solve it
-# 0. Find a specific piece
-
-# 1. Make a cross
-
-    # def make_cross(self):
 
 x = Cube2()
 # x.scramble()
