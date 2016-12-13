@@ -45,30 +45,6 @@ class Cube:
                         self.cube[x,y,z,2] = 4
 
     def print_cube(self):
-# want something that can output the cube to screen
-# will define how we unfold the cube. As we look at it (down from positive x)
-# the face facing us (X=2) is F
-# F:X=2, L:Y=0, R:Y=2, B:X=0, U:Z=2, D:Z=0
-# multiply the negative faces by -1 to only print out positive numbers
-        self.front = self.cube[2,:,:][:,:,0][::-1] # the first indexer gets us the X=2 plane, and the second indexer gets us all the cx from that
-        self.back = self.cube[0,:,:][:,:,0][::-1]*-1 # same, but for X=0 plane
-        self.left = self.cube[:,0,:][:,:,1][::-1]*-1 # all cy in Y=0 plane
-        self.right = self.cube[:,2,:][:,:,1][::-1] # smae for Y=2
-        self.upper = self.cube[:,:,2][:,:,2][::-1] # cz for Z=2
-        self.down = self.cube[:,:,0][:,:,2][::-1]*-1 # cz for Z=0
-        print("         ",self.upper[0])
-        print("         ",self.upper[1])
-        print("         ",self.upper[2])
-        print("")
-        print(self.left[0]," ",self.front[0]," ",self.right[0]," ",self.back[0])
-        print(self.left[1]," ",self.front[1]," ",self.right[1]," ",self.back[1])
-        print(self.left[2]," ",self.front[2]," ",self.right[2]," ",self.back[2])
-        print("")
-        print("         ",self.down[0])
-        print("         ",self.down[1])
-        print("         ",self.down[2])
-
-    def print_cube2(self):
 # redoing the printing stage "manually" like
 #[["U1","U2","U3"],["U8","U0","U4"],["U7","U6","U5"]]
 #[["L1","L2","L3"],["L8","L0","L4"],["L7","L6","L5"]]
@@ -77,15 +53,15 @@ class Cube:
 #[["B1","B2","B3"],["B8","B0","B4"],["B7","B6","B5"]] 8 0 4
 #[["D1","D2","D3"],["D8","D0","D4"],["D7","D6","D5"]] 7 6 5
         # f0 = self.cube[1,0,1][1]
-        f1 = -self.cube[0,0,2][1]
-        f2 = -self.cube[1,0,2][1]
-        f3 = -self.cube[2,0,2][1]
-        f4 = -self.cube[2,0,1][1]
-        f5 = -self.cube[2,0,0][1]
-        f6 = -self.cube[1,0,0][1]
-        f7 = -self.cube[0,0,0][1]
-        f8 = -self.cube[0,0,1][1]
-        f0 = -self.cube[1,0,1][1]
+        F1 = -self.cube[0,0,2][1]
+        F2 = -self.cube[1,0,2][1]
+        F3 = -self.cube[2,0,2][1]
+        F4 = -self.cube[2,0,1][1]
+        F5 = -self.cube[2,0,0][1]
+        F6 = -self.cube[1,0,0][1]
+        F7 = -self.cube[0,0,0][1]
+        F8 = -self.cube[0,0,1][1]
+        F0 = -self.cube[1,0,1][1]
 
         L1 = -self.cube[0,2,2][0]
         L2 = -self.cube[0,1,2][0]
@@ -136,6 +112,18 @@ class Cube:
         D7 = -self.cube[0,2,0][2]
         D8 = -self.cube[0,1,0][2]
         D0 = -self.cube[1,1,0][2]
+
+        print("       ",U1,U2,U3)
+        print("       ",U8,U0,U4)
+        print("       ",U7,U6,U5)
+        print()
+        print(L1,L2,L3," ",F1,F2,F3," ",R1,R2,R3," ",B1,B2,B3)
+        print(L8,L0,L4," ",F8,F0,F4," ",R8,R0,R4," ",B8,B0,B4)
+        print(L7,L6,L5," ",F7,F6,F5," ",R7,R6,R5," ",B7,B6,B5)
+        print()
+        print("       ",D1,D2,D3)
+        print("       ",D8,D0,D4)
+        print("       ",D7,D6,D5)
 
 # Next, we need to implement rotations of the cube, where we don't
 # perform any twist, just a rotation in space
@@ -194,50 +182,77 @@ class Cube:
         self.cube = tmp_cube
 
 # Next, we'll start to implement twists
+
     def twist_F(self):
 # first move the cubies
-        # print(self.cube[2,:,:])
         tmp_cube = np.array(self.empty_cube)
+        tmp = np.array([list(self.cube[:,0,:][0,:,:][x]) for x in range(0,3)]) # (0,0,0-2)
+
+        face = self.cube[:,0,:]
+
+        face[0,:] = face[:,0][::-1]
+        face[:,0] = face[2,:]
+        face[2,:] = face[:,2][::-1]
+        face[:,2] = tmp
+
+# Next reorient the cubies
+        tmp = self.cube
+        tmp = np.array([list(self.cube[:,0,:][x]) for x in range(0,3)])
+        self.cube[:,0,:][:,:,0] = -tmp[:,:,2]
+        self.cube[:,0,:][:,:,2] = tmp[:,:,0]
+
+
+#     def twist_F(self):
+# # first move the cubies
+#         # print(self.cube[2,:,:])
+#         tmp_cube = np.array(self.empty_cube)
         
-        tmp = np.array([list(self.cube[2,:,:][0,:,:][x]) for x in range(0,3)]) # (0,0,0-2)
-        self.cube[2,:,:][0,:,:] = self.cube[2,:,:][:,0,:][::-1]
-        self.cube[2,:,:][:,0,:] = self.cube[2,:,:][2,:,:]
-        self.cube[2,:,:][2,:,:] = self.cube[2,:,:][:,2,:][::-1]
-        self.cube[2,:,:][:,2,:] = tmp
+#         tmp = np.array([list(self.cube[2,:,:][0,:,:][x]) for x in range(0,3)]) # (0,0,0-2)
 
-# now reorient the cubies
-        # tmp2 = self.cube
-        # tmp2 = np.array([list(self.cube[2,:,:][x]) for x in range(0,3)])
-        # print(tmp2)
-        # self.cube[2,:,:][:,:,1] = tmp2[:,:,2]
-        # self.cube[2,:,:][:,:,2] = -tmp2[:,:,1]
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        # print(self.cube[2,:,:])
+#         self.cube[2,:,:][0,:,:] = self.cube[2,:,:][:,0,:][::-1]
+#         self.cube[2,:,:][:,0,:] = self.cube[2,:,:][2,:,:]
+#         self.cube[2,:,:][2,:,:] = self.cube[2,:,:][:,2,:][::-1]
+#         self.cube[2,:,:][:,2,:] = tmp
 
-        # print(self.cube)
+# # now reorient the cubies
+#         tmp2 = self.cube
+#         tmp2 = np.array([list(self.cube[2,:,:][x]) for x in range(0,3)])
+#         # print(tmp2)
+#         self.cube[2,:,:][:,:,1] = tmp2[:,:,2]
+#         self.cube[2,:,:][:,:,2] = -tmp2[:,:,1]
+#         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+#         # print(self.cube[2,:,:])
+
+#         # print(self.cube)
 
 c = Cube()
-print(c.cube[0,0,0][2])
-print(c.cube[1,0,0][2])
-print(c.cube[2,0,0][2])
-print(c.cube[2,1,0][2])
-print(c.cube[2,2,0][2])
-print(c.cube[1,2,0][2])
-print(c.cube[0,2,0][2])
-print(c.cube[0,1,0][2])
-print(c.cube[1,1,0][2])
-
-# # c.print_cube2()
 # c.print_cube()
-# print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-# # # c.rotate_cube(1,"Z")
-# # c.twist_F()
+print(c.cube[:,0,:])
+print(c.cube[:,0,:][:,:,0])
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+# print(c.cube[:,0,:][:,0][::-1])
+# c.print_cube()
+# print(c.cube[0,0,0][2])
+# print(c.cube[1,0,0][2])
+# print(c.cube[2,0,0][2])
+# print(c.cube[2,1,0][2])
+# print(c.cube[2,2,0][2])
+# print(c.cube[1,2,0][2])
+# print(c.cube[0,2,0][2])
+# print(c.cube[0,1,0][2])
+# print(c.cube[1,1,0][2])
+
+# # c.print_cube()
+# c.print_cube()
+# print(c.cube[2,:,:][0,:,:])
+# c.rotate_cube(1,"Z")
 # c.twist_F()
+c.twist_F()
 
 # print(c.cube)
 # # print(c.cube[2,:,:])
 
-# c.print_cube()
+c.print_cube()
 # print(c.cube[2,:,:])
 # print(c.cube[2,:,:][2,:,:][::-1])
 # c.print_cube()
