@@ -17,6 +17,15 @@ class Cube:
         self.empty_cube = [self.face,self.face,self.face] # build up the cube
 
         self.cube = np.array(self.empty_cube) # np array is easier to navigate
+# set up some rotation matrices for later
+        self.x_clockwise = [ [1,0,0], [0,0,1], [0,-1,0] ]
+        self.x_anticlockwise = [ [1,0,0], [0,0,-1], [0,1,0] ]
+        self.y_clockwise = [ [0,0,-1], [0,1,0], [1,0,0] ]
+        self.y_anticlockwise = [ [0,0,1], [0,1,0], [-1,0,0] ]
+        self.z_clockwise = [ [0,1,0], [-1,0,0], [0,0,1] ]
+        self.z_anticlockwise = [ [0,-1,0], [1,0,0], [0,0,1] ]
+
+        self.rotation_matrices = [self.x_clockwise,self.x_anticlockwise,self.y_clockwise,self.y_anticlockwise,self.z_clockwise,self.z_anticlockwise]
 
 # next we need to set the colour vectors
         for x in range(0,3):
@@ -139,7 +148,7 @@ class Cube:
         if clockwise != 0 and clockwise != 1:
             raise("first argument must be 1 or 0 (clockwise or anticlockwise rotation)")
 
-        tmp_cube = np.array(self.empty_cube)
+        tmp_cube = np.array(self.cube)
 
         for i in range(0,3):
             for j in range(0,3):
@@ -149,30 +158,21 @@ class Cube:
                     y = j - 1 # so we can rotate about z axis
                     z = k - 1
 
-                    x_clockwise = [ [1,0,0], [0,0,1], [0,-1,0] ]
-                    x_anticlockwise = [ [1,0,0], [0,0,-1], [0,1,0] ]
-                    y_clockwise = [ [0,0,-1], [0,1,0], [1,0,0] ]
-                    y_anticlockwise = [ [0,0,1], [0,1,0], [-1,0,0] ]
-                    z_clockwise = [ [0,1,0], [-1,0,0], [0,0,1] ]
-                    z_anticlockwise = [ [0,-1,0], [1,0,0], [0,0,1] ]
-
-                    rotation_matrices = [x_clockwise,x_anticlockwise,y_clockwise,y_anticlockwise,z_clockwise,z_anticlockwise]
-
                     if axis == "X":
                         if clockwise == 1:
-                            matrix = rotation_matrices[0]
+                            matrix = self.rotation_matrices[0]
                         else:
-                            matrix = rotation_matrices[1]
+                            matrix = self.rotation_matrices[1]
                     elif axis == "Y":
                         if clockwise == 1:
-                            matrix = rotation_matrices[2]
+                            matrix = self.rotation_matrices[2]
                         else:
-                            matrix = rotation_matrices[3]
+                            matrix = self.rotation_matrices[3]
                     elif axis == "Z":
                         if clockwise == 1:
-                            matrix = rotation_matrices[4]
+                            matrix = self.rotation_matrices[4]
                         else:
-                            matrix = rotation_matrices[5]
+                            matrix = self.rotation_matrices[5]
                     else:
                         raise("can only rotate about X,Y, or Z axes, invalid input")
 
@@ -189,86 +189,103 @@ class Cube:
 
 # Next, we'll start to implement twists
 
-    def twist_F(self):
-# first move the cubies
-        tmp_cube = np.array(self.empty_cube)
-        tmp = np.array([list(self.cube[:,0,:][0,:,:][x]) for x in range(0,3)]) # (0,0,0-2)
+    def twist(self,clockwise,face):
+        if clockwise != 0 and clockwise != 1:
+            raise("first argument must be 1 or 0 (clockwise or anticlockwise rotation)")
 
-        face = self.cube[:,0,:]
+        xlow   = 0 # these will be the ranges of the loops
+        xhigh  = 3 # the twist works like the rotation
+        ylow   = 0 # method above, except it only rotates
+        yhigh  = 3 # one face as opposed to all 3
+        zlow   = 0
+        zhigh  = 3
 
-        face[0,:] = face[:,0][::-1]
-        face[:,0] = face[2,:]
-        face[2,:] = face[:,2][::-1]
-        face[:,2] = tmp
-
-# Next reorient the cubies
-        tmp = self.cube
-        tmp = np.array([list(self.cube[:,0,:][x]) for x in range(0,3)])
-        self.cube[:,0,:][:,:,0] = tmp[:,:,2]
-        self.cube[:,0,:][:,:,2] = -tmp[:,:,0]
-
-
-#     def twist_F(self):
-# # first move the cubies
-#         # print(self.cube[2,:,:])
-#         tmp_cube = np.array(self.empty_cube)
+        if face == "F":
+            if clockwise == 1:
+                ix_matrix = 3 # this is the index of the array rotation_matrices
+            else:
+                ix_matrix = 2
+            yhigh = 1
         
-#         tmp = np.array([list(self.cube[2,:,:][0,:,:][x]) for x in range(0,3)]) # (0,0,0-2)
+        elif face == "B":
+            if clockwise == 1:
+                ix_matrix = 2
+            else:
+                ix_matrix = 3
+            ylow = 2
 
-#         self.cube[2,:,:][0,:,:] = self.cube[2,:,:][:,0,:][::-1]
-#         self.cube[2,:,:][:,0,:] = self.cube[2,:,:][2,:,:]
-#         self.cube[2,:,:][2,:,:] = self.cube[2,:,:][:,2,:][::-1]
-#         self.cube[2,:,:][:,2,:] = tmp
+        elif face == "L":
+            if clockwise == 1:
+                ix_matrix = 1
+            else:
+                ix_matrix = 0
+            xhigh = 1
 
-# # now reorient the cubies
-#         tmp2 = self.cube
-#         tmp2 = np.array([list(self.cube[2,:,:][x]) for x in range(0,3)])
-#         # print(tmp2)
-#         self.cube[2,:,:][:,:,1] = tmp2[:,:,2]
-#         self.cube[2,:,:][:,:,2] = -tmp2[:,:,1]
-#         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-#         # print(self.cube[2,:,:])
+        elif face == "R":
+            if clockwise == 1:
+                ix_matrix = 0
+            else:
+                ix_matrix = 1
+            xlow = 2
 
-#         # print(self.cube)
+        elif face == "U":
+            if clockwise == 1:
+                ix_matrix = 4
+            else:
+                ix_matrix = 5
+            zlow = 2
+
+        elif face == "D":
+            if clockwise == 1:
+                ix_matrix = 5
+            else:
+                ix_matrix = 4
+            zhigh = 1
+
+        else:
+            raise("invalid face")
+
+        matrix = self.rotation_matrices[ix_matrix]
+# now we rotate the cubies
+        tmp_cube = np.array(self.cube)
+        for i in range(xlow,xhigh):
+            for j in range(ylow,yhigh):
+                for k in range(zlow,zhigh):
+
+                    x = i - 1 # centre the cube at 0,0,0
+                    y = j - 1 # so we can rotate about z axis
+                    z = k - 1
+
+                    [x1,y1,z1] = np.dot(matrix,[x,y,z]) # new coordinates after rotating
+
+                    i1 = x1 + 1 # translate back to
+                    j1 = y1 + 1 # out original frame
+                    k1 = z1 + 1
+
+                    tmp = self.cube[i,j,k] # rotate the cubies, but keep their original orientation
+                    
+                    tmp_cube[i1,j1,k1] = np.dot(matrix,tmp) # this rotates the cubies' orientation
+
+        self.cube = tmp_cube
+
 
 c = Cube()
-# c.print_cube()
-print(c.cube[:,0,:])
-c.twist_F()
-
-print(c.cube[:,0,:])
-
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-# print(c.cube[:,0,:][:,0][::-1])
-# c.print_cube()
-# print(c.cube[0,0,0][2])
-# print(c.cube[1,0,0][2])
-# print(c.cube[2,0,0][2])
-# print(c.cube[2,1,0][2])
-# print(c.cube[2,2,0][2])
-# print(c.cube[1,2,0][2])
-# print(c.cube[0,2,0][2])
-# print(c.cube[0,1,0][2])
-# print(c.cube[1,1,0][2])
-
-# # c.print_cube()
-# c.print_cube()
-# print(c.cube[2,:,:][0,:,:])
-# c.rotate_cube(1,"Z")
-# c.twist_F()
-# c.twist_F()
-# c.rotate_cube(1,"Z")
-# c.twist_F()
-# c.twist_F()
-# c.twist_F()
-# # c.rotate_cube(1,"X")
-# # print(c.cube)
-# # # print(c.cube[2,:,:])
-
 c.print_cube()
-# # print(c.cube[2,:,:])
-# # print(c.cube[2,:,:][2,:,:][::-1])
-# # c.print_cube()
-# print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+# print(c.cube[:,0,:])
+# c.rotate_cube(1,"Y")
+c.twist(1,"U")
+c.twist(1,"U")
+c.twist(1,"D")
+c.twist(1,"D")
 
-# # c.print_cube()
+c.twist(1,"F")
+c.twist(1,"F")
+c.twist(1,"B")
+c.twist(1,"B")
+
+c.twist(1,"L")
+c.twist(1,"L")
+c.twist(1,"R")
+c.twist(1,"R")
+print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+c.print_cube()
