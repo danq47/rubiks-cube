@@ -1,4 +1,5 @@
 import numpy as np
+import random as rd
 
 class Cube:
 # We will represent the cube as a numpy array where we can access each
@@ -269,23 +270,32 @@ class Cube:
         self.cube = tmp_cube
 
 
+    def scramble(self):
+# method to scramble the cube
+        rd.seed(a=1) # set random seed for reproducability 
+        rand = rd.randint(30,50)
+        for i in range(rand):
+            face = rd.choice(["F","B","L","R","U","D"]) # choose a random face
+            clockwise = rd.choice([0,1]) # choose whether it will be a clockwise or anti clockwise twist
+            self.twist(clockwise,face)
+
+
+
+
+
+
+
+
+
 c = Cube()
+c.scramble()
 c.print_cube()
-# print(c.cube[:,0,:])
+# # print(c.cube[:,0,:])
+# # c.rotate_cube(1,"Y")
+# c.twist(1,"U")
 # c.rotate_cube(1,"Y")
-c.twist(1,"U")
-c.twist(1,"U")
-c.twist(1,"D")
-c.twist(1,"D")
-
-c.twist(1,"F")
-c.twist(1,"F")
-c.twist(1,"B")
-c.twist(1,"B")
-
-c.twist(1,"L")
-c.twist(1,"L")
-c.twist(1,"R")
-c.twist(1,"R")
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-c.print_cube()
+# c.twist(0,"U")
+# c.twist(1,"U")
+# c.twist(0,"L")
+# print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+# c.print_cube()
