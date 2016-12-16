@@ -269,7 +269,6 @@ class Cube:
 
         self.cube = tmp_cube
 
-
     def scramble(self):
 # method to scramble the cube
         rd.seed(a=1) # set random seed for reproducability 
@@ -280,16 +279,46 @@ class Cube:
             self.twist(clockwise,face)
 
 
+# now we want to start adding in algorithms for solving the cube
+# We'll solve the front face I think
 
+# We'll need a method to locate certain pieces
+# This will take 1, 2 or 3 colours, and return the location of that piece
 
+    def locate_piece(self,c1,c2=0,c3=0):
 
+        c1 = abs(c1)
+        c2 = abs(c2)
+        c3 = abs(c3)
+        colours=set([c1,c2,c3])
+        pieces = []
+        
+        xyz_grid = [(x,y,z) for x in range(3) for y in range(3) for z in range(3)]
+        
+        for xyz in xyz_grid:
+            if colours <= set( abs( self.cube[ xyz ] ) ):
+                    pieces.append(xyz)
 
+        if len(pieces) > 1: # this will happen for centre pieces, which have 2 zeros in the colour vector
+# # drop any pieces which aren't central pieces
+            for i in pieces:
+                tmp = i
+                i = list(i)
+                i.remove(1)
+                if 1 in i:
+                    pieces = tmp
 
-
+        print(pieces)
 
 c = Cube()
-c.scramble()
-c.print_cube()
+# c.scramble()
+# c.print_cube()
+c.locate_piece(2)
+# list1=[1,0,2]
+# list1.remove(1)
+# list1.remove(1)
+# print(list1)
+# print(abs(c.cube[0,0,0]))
 # # print(c.cube[:,0,:])
 # # c.rotate_cube(1,"Y")
 # c.twist(1,"U")
