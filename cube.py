@@ -54,6 +54,11 @@ class Cube:
                     elif z == 2:
                         self.cube[x,y,z,2] = 4
 
+# Now we'll store a variable called original_cube which has the locations of
+# all of the cubies on the solved state, so we can tell if something is in 
+# the right place or not
+        self.original_cube=self.cube
+
     def print_cube(self):
 # redoing the printing stage "manually" like
 #[["U1","U2","U3"],["U8","U0","U4"],["U7","U6","U5"]]
@@ -271,8 +276,8 @@ class Cube:
 
     def scramble(self):
 # method to scramble the cube
-        rd.seed(a=1) # set random seed for reproducability 
-        rand = rd.randint(30,50)
+        rd.seed(a=3) # set random seed for reproducability 
+        rand = rd.randint(20,40)
         for i in range(rand):
             face = rd.choice(["F","B","L","R","U","D"]) # choose a random face
             clockwise = rd.choice([0,1]) # choose whether it will be a clockwise or anti clockwise twist
@@ -285,7 +290,9 @@ class Cube:
 # We'll need a method to locate certain pieces
 # This will take 1, 2 or 3 colours, and return the location of that piece
 
-    def locate_piece(self,c1,c2=0,c3=0):
+    def locate_piece(self,original,c1,c2=0,c3=0):
+# if original = 1, then we are looking for the position in the original (solved state)
+# otherwise we're looking on our current cube
 
         c1 = abs(c1)
         c2 = abs(c2)
@@ -295,9 +302,16 @@ class Cube:
         
         xyz_grid = [(x,y,z) for x in range(3) for y in range(3) for z in range(3)]
         
-        for xyz in xyz_grid:
-            if colours <= set( abs( self.cube[ xyz ] ) ):
-                    pieces.append(xyz)
+        if original == 1:
+            for xyz in xyz_grid:
+                if colours <= set( abs( self.original_cube[ xyz ] ) ):
+                        pieces.append(xyz)
+
+        else:
+            for xyz in xyz_grid:
+                if colours <= set( abs( self.cube[ xyz ] ) ):
+                        pieces.append(xyz)
+
 
         if len(pieces) > 1: # this will happen for centre pieces, which have 2 zeros in the colour vector
 # # drop any pieces which aren't central pieces
@@ -308,23 +322,93 @@ class Cube:
                 if 1 in i:
                     pieces = tmp
 
-        print(pieces)
+        return pieces[0]
+
+
+
+# if we consider F the front, then we want to put pieces in the back (for making the cross)
+    def to_back(self,cubie):
+        x=cubie[0]
+        y=cubie[1]
+        z=cubie[2]
+        
+# First check if it is in the back face
+
+        if y == 2: # it's in the back face already
+            pass
+    
+
+        elif y == 0: # it's in the front face, need to figure out which face to turn
+            
+            if x == 0 and z == 1:
+                face = "L"
+            elif x == 1 and z == 0:
+                face = "D"
+            elif x == 2 and z == 1:
+                face = "R"
+            elif x == 1 and z == 2:
+                face = "U"
+
+            for _ in range(2):
+                self.twist(1,face) # rotate clockwise twice around whichever face we've chosen
+
+
+        elif y == 1: # it's in the middle layer, and we once again need to twist a face
+
+            if x == 0 and z == 0:
+                face = "L"
+            elif x == 2 and z == 0:
+                face = "D"
+            elif x == 2 and z == 2:
+                face = "R"
+            elif x == 0 and z == 2:
+                face = "U"
+
+            self.twist(1,face)
+
+
+
+    def make_cross(self):
+        u_col = abs(self.cube[1,1,2][2])
+        d_col = abs(self.cube[1,1,0][2])
+        f_col = abs(self.cube[1,0,1][1])
+        b_col = abs(self.cube[1,2,1][1])
+        l_col = abs(self.cube[0,1,1][0])
+        r_col = abs(self.cube[2,1,1][0])
+# try find FL piece first. should be at (0,0,1). First we'll put it into the bottom (y=2) face
+# 3 steps - (1) find the piece, (2) put it in the bottom, (3) rotate so that it is in the right face,
+# (4) rotate the face (i.e. here L) until the piece is in the correct position, (5) if it's not already
+# (5) in the right orientation, flip it
+
+# 1. Find the pieces
+        # pieces_to_find = ["l","u","r","d"]
+
+        original_position = self.locate_piece(1,f_col,l_col)
+        current_position  = self.locate_piece(0,f_col,l_col)
+
+# 2. Put the piece in the back face and find it's new location
+
+        self.to_back(current_position)
+        current_position  = self.locate_piece(0,f_col,l_col)
+
+# 3. Rotate B so that it's on the right face
+
+        while current_position[0] != original_position[0] and current_position[2] != original_position[2]:
+            self.twist(1,"B")
+            current_position  = self.locate_piece(0,f_col,l_col)
+
+
+
+
 
 c = Cube()
-# c.scramble()
-# c.print_cube()
-c.locate_piece(2)
-# list1=[1,0,2]
-# list1.remove(1)
-# list1.remove(1)
-# print(list1)
-# print(abs(c.cube[0,0,0]))
-# # print(c.cube[:,0,:])
-# # c.rotate_cube(1,"Y")
-# c.twist(1,"U")
-# c.rotate_cube(1,"Y")
-# c.twist(0,"U")
-# c.twist(1,"U")
-# c.twist(0,"L")
-# print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-# c.print_cube()
+
+c.scramble()
+c.print_cube()
+print("~~~~~~~~~~~~~~~~~~~~~~")
+c.make_cross()
+c.print_cube()
+
+
+
+
