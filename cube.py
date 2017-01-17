@@ -150,10 +150,7 @@ class Cube:
 # Next, we need to implement rotations of the cube, where we don't
 # perform any twist, just a rotation in space
 
-    def rotate_cube(self,clockwise,axis):
-
-        if clockwise != 0 and clockwise != 1:
-            raise("first argument must be 1 or 0 (clockwise or anticlockwise rotation)")
+    def rotate_cube(self,axis):
 
         tmp_cube = np.array(self.cube)
 
@@ -166,20 +163,11 @@ class Cube:
                     z = k - 1
 
                     if axis == "X":
-                        if clockwise == 1:
-                            matrix = self.rotation_matrices[0]
-                        else:
-                            matrix = self.rotation_matrices[1]
+                        matrix = self.rotation_matrices[0]
                     elif axis == "Y":
-                        if clockwise == 1:
-                            matrix = self.rotation_matrices[2]
-                        else:
-                            matrix = self.rotation_matrices[3]
+                        matrix = self.rotation_matrices[2]
                     elif axis == "Z":
-                        if clockwise == 1:
-                            matrix = self.rotation_matrices[4]
-                        else:
-                            matrix = self.rotation_matrices[5]
+                        matrix = self.rotation_matrices[4]
                     else:
                         raise("can only rotate about X,Y, or Z axes, invalid input")
 
@@ -196,9 +184,11 @@ class Cube:
 
 # Next, we'll start to implement twists
 
-    def twist(self,clockwise,face):
-        if clockwise != 0 and clockwise != 1:
-            raise("first argument must be 1 or 0 (clockwise or anticlockwise rotation)")
+    def twist(self,face,scramble=0):
+        
+        if scramble != 1: # save the moves we do so that the robot knows what to do (but only if we're not scrambling)
+            self.solution.append(face)
+
 
         xlow   = 0 # these will be the ranges of the loops
         xhigh  = 3 # the twist works like the rotation
@@ -208,45 +198,27 @@ class Cube:
         zhigh  = 3
 
         if face == "F":
-            if clockwise == 1:
-                ix_matrix = 3 # this is the index of the array rotation_matrices
-            else:
-                ix_matrix = 2
+            ix_matrix = 3 # this is the index of the array rotation_matrices
             yhigh = 1
         
         elif face == "B":
-            if clockwise == 1:
-                ix_matrix = 2
-            else:
-                ix_matrix = 3
+            ix_matrix = 2
             ylow = 2
 
         elif face == "L":
-            if clockwise == 1:
-                ix_matrix = 1
-            else:
-                ix_matrix = 0
+            ix_matrix = 1
             xhigh = 1
 
         elif face == "R":
-            if clockwise == 1:
-                ix_matrix = 0
-            else:
-                ix_matrix = 1
+            ix_matrix = 0
             xlow = 2
 
         elif face == "U":
-            if clockwise == 1:
-                ix_matrix = 4
-            else:
-                ix_matrix = 5
+            ix_matrix = 4
             zlow = 2
 
         elif face == "D":
-            if clockwise == 1:
-                ix_matrix = 5
-            else:
-                ix_matrix = 4
+            ix_matrix = 5
             zhigh = 1
 
         else:
@@ -275,14 +247,22 @@ class Cube:
 
         self.cube = tmp_cube
 
+        if scramble != 1:
+            print()
+            print("vvvvvvvvvvv",face,"vvvvvvvvvvvv")
+            print()
+            self.print_cube()
+
+
     def scramble(self):
 # method to scramble the cube
         rd.seed(a=3) # set random seed for reproducability 
         rand = rd.randint(20,40)
         for i in range(rand):
             face = rd.choice(["F","B","L","R","U","D"]) # choose a random face
-            clockwise = rd.choice([0,1]) # choose whether it will be a clockwise or anti clockwise twist
-            self.twist(clockwise,face)
+            n_turns = rd.choice([1,2,3]) # choose number of turns clockwise
+            for _ in range(n_turns):
+                self.twist(face,1)
 
 
 # now we want to start adding in algorithms for solving the cube
@@ -351,7 +331,7 @@ class Cube:
                 face = "U"
 
             for _ in range(2):
-                self.twist(1,face) # rotate clockwise twice around whichever face we've chosen
+                self.twist(face) # rotate clockwise twice around whichever face we've chosen
                 
 
         elif y == 1: # it's in the middle layer, and we once again need to twist a face
@@ -365,7 +345,9 @@ class Cube:
             elif x == 0 and z == 2:
                 face = "U"
 
-            self.twist(1,face)
+            self.twist(face)
+
+        self.solution.append(".")
             
 
 
@@ -384,37 +366,57 @@ class Cube:
 
 # 1. Find the pieces
 
-        piece_colours = [ l_col, u_col, r_col, d_col ]
-        faces = { l_col:"L", u_col:"U", r_col:"R", d_col:"D"}
+        piece_colours = [ r_col, d_col, l_col, u_col ]
+        faces = { r_col:"R", d_col:"D", l_col:"L", u_col:"U" }
+
 
         for piece in piece_colours:
-            
+
+
             original_position = self.locate_piece(1,f_col,piece)
             current_position  = self.locate_piece(0,f_col,piece)
 
-# 2. Put the piece in the back face and find it's new location
+            if current_position == original_position:
+                pass
 
-            self.to_back(current_position)
-            current_position  = self.locate_piece(0,f_col,piece)
+            else:
+
+# 2.a if piece is in F layer, put in back, otherwise 
+                if current_position[1] == 1:
+                    self.to_back(current_position)
+                    current_position  = self.locate_piece(0,f_col,piece)
+# 2.b else if it's in the middle (i.e. between F and B) layer 
 
 # 3. Rotate B so that it's on the right face
 
-            while current_position[0] != original_position[0] and current_position[2] != original_position[2]:
-                self.twist(1,"B")
-                current_position  = self.locate_piece(0,f_col,piece)
+                print(faces[piece])
+                print("current position:",current_position)
+                print("original position:",original_position)
+                
+                cxz=[current_position[0],current_position[2]] # current position x and z coordinates
+                oxz=[original_position[0],original_position[2]] # original position x and z coordinates
+
+                while cxz != oxz:
+                    self.twist("B")
+                    current_position  = self.locate_piece(0,f_col,piece)
+                    cxz=[current_position[0],current_position[2]]
+                    print("current position:",current_position)
 
 # 4. Rotate it back into F
 
-            for _ in range(2):
-                self.twist(1,faces[piece])
+                for _ in range(2):
+                    self.twist(faces[piece])
+                    self.solution.append("'")
 
 c = Cube()
 
 c.scramble()
 c.print_cube()
 print("~~~~~~~~~~~~~~~~~~~~~~")
+# c.twist("B")
 c.make_cross()
-c.print_cube()
+# c.print_cube()
+print(c.solution)
 
 
 
