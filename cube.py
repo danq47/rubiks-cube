@@ -58,6 +58,7 @@ class Cube:
 # all of the cubies on the solved state, so we can tell if something is in 
 # the right place or not
         self.original_cube=self.cube
+        self.solution=[]
 
     def print_cube(self):
 # redoing the printing stage "manually" like
@@ -351,7 +352,7 @@ class Cube:
 
             for _ in range(2):
                 self.twist(1,face) # rotate clockwise twice around whichever face we've chosen
-
+                
 
         elif y == 1: # it's in the middle layer, and we once again need to twist a face
 
@@ -365,6 +366,7 @@ class Cube:
                 face = "U"
 
             self.twist(1,face)
+            
 
 
 
@@ -381,25 +383,30 @@ class Cube:
 # (5) in the right orientation, flip it
 
 # 1. Find the pieces
-        # pieces_to_find = ["l","u","r","d"]
 
-        original_position = self.locate_piece(1,f_col,l_col)
-        current_position  = self.locate_piece(0,f_col,l_col)
+        piece_colours = [ l_col, u_col, r_col, d_col ]
+        faces = { l_col:"L", u_col:"U", r_col:"R", d_col:"D"}
+
+        for piece in piece_colours:
+            
+            original_position = self.locate_piece(1,f_col,piece)
+            current_position  = self.locate_piece(0,f_col,piece)
 
 # 2. Put the piece in the back face and find it's new location
 
-        self.to_back(current_position)
-        current_position  = self.locate_piece(0,f_col,l_col)
+            self.to_back(current_position)
+            current_position  = self.locate_piece(0,f_col,piece)
 
 # 3. Rotate B so that it's on the right face
 
-        while current_position[0] != original_position[0] and current_position[2] != original_position[2]:
-            self.twist(1,"B")
-            current_position  = self.locate_piece(0,f_col,l_col)
+            while current_position[0] != original_position[0] and current_position[2] != original_position[2]:
+                self.twist(1,"B")
+                current_position  = self.locate_piece(0,f_col,piece)
 
+# 4. Rotate it back into F
 
-
-
+            for _ in range(2):
+                self.twist(1,faces[piece])
 
 c = Cube()
 
