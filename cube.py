@@ -149,54 +149,26 @@ class Cube:
 
         return pieces[0]
 
+    def to_back(self, position): # function to put a piece to the back
 
+        [x,y,z] = position
+        if position[1] == 2 :
+            pass # it's already in the back
 
-# # if we consider F the front, then we want to put pieces in the back (for making the cross)
-#     def to_back(self,cubie):
-#         x=cubie[0]
-#         y=cubie[1]
-#         z=cubie[2]
+        elif position[1] == 0 : # it's in the front but the wrong position
+            face_to_turn = { (1,0):"D", (2,1):"R", (1,2):"U", (0,1):"L" } # choose which face to turn based on [x,z]
+            for _ in range(2):
+                self.twist(face_to_turn[(x,z)],1) # twist twice
         
-# # First check if it is in the back face
-
-#         if y == 2: # it's in the back face already
-#             pass
-    
-
-#         elif y == 0: # it's in the front face, need to figure out which face to turn
-            
-#             if x == 0 and z == 1:
-#                 face = "L"
-#             elif x == 1 and z == 0:
-#                 face = "D"
-#             elif x == 2 and z == 1:
-#                 face = "R"
-#             elif x == 1 and z == 2:
-#                 face = "U"
-
-#             for _ in range(2):
-#                 self.twist(face) # rotate clockwise twice around whichever face we've chosen
-                
-
-#         elif y == 1: # it's in the middle layer, and we once again need to twist a face
-
-#             if x == 0 and z == 0:
-#                 face = "L"
-#             elif x == 2 and z == 0:
-#                 face = "D"
-#             elif x == 2 and z == 2:
-#                 face = "R"
-#             elif x == 0 and z == 2:
-#                 face = "U"
-
-#             self.twist(face)
-
-#         self.solution.append(".")
-            
-
-
+        else: # it's in the middle layer. This is the first algorithm we've got to put in because we can't mess up the front layer
+            face_to_turn = { (2,0):"D", (2,2):"R", (0,2):"U", (0,0):"L"}
+            self.twist(face_to_turn[(x,z)],1)
+            self.twist("B",1)
+            for _ in range(3):
+                self.twist(face_to_turn[(x,z)],1)
 
     def make_cross(self):
+
         u_col = abs(self.cube[1,1,2][2])
         d_col = abs(self.cube[1,1,0][2])
         f_col = abs(self.cube[1,0,1][1])
@@ -213,8 +185,61 @@ class Cube:
         piece_colours = [ r_col, d_col, l_col, u_col ]
         faces = { r_col:"R", d_col:"D", l_col:"L", u_col:"U" }
 
-        original_position = self.locate_piece(1,f_col,r_col)
-        current_position  = self.locate_piece(0,f_col,r_col)
+        for piece in piece_colours:
+
+            original_position = self.locate_piece(1,f_col,piece)
+            current_position  = self.locate_piece(0,f_col,piece)
+
+            if current_position == original_position : # piece is already in the right place
+                pass
+
+            else:
+
+                if current_position[1] < 2 : # it's not yet in the back
+                    self.to_back(current_position)
+                    current_position  = self.locate_piece(0,f_col,piece)
+
+# now it's definitely in the back
+                cxz = [ current_position[0], current_position[2] ] # current xz
+                oxz = [ original_position[0], original_position[2] ] # original xz
+
+
+                while cxz != oxz : # while not in the right face
+                    self.twist("B",1) # rotate
+                    current_position  = self.locate_piece(0,f_col,piece)
+                    cxz=[current_position[0],current_position[2]]
+
+# Rotate it back into F
+
+                for _ in range(2):
+                    self.twist(faces[piece],1)
+
+
+
+
+
+        # original_position = self.locate_piece(1,f_col,l_col)
+        # current_position  = self.locate_piece(0,f_col,l_col)
+
+# if piece isn't in the right place, 3 things can happen - either the piece is in the back layer, middle layer, or top layer
+
+
+        # if current_position == original_position : # it's already in the right place
+        #     pass
+
+
+        # elif current_position[1] == 2 : # if y = 2 it's in the back
+
+        #     cxz = [ current_position[0], current_position[2] ] # current xz
+        #     oxz = [ original_position[0], original_position[2] ] # original xz 
+
+        #     while cxz != oxz : # while it's not in the right face
+        #         self.twist("B",1) # rotate
+        #         current_position  = self.locate_piece(0,f_col,piece)
+        #         cxz=[current_position[0],current_position[2]]
+
+
+
 
 #         if current_position == original_position : # it's already in the right place
 #             pass
@@ -264,14 +289,15 @@ class Cube:
 
 c = Cube()
 
-# c.scramble()
+c.scramble()
+c.make_cross()
 
 # c.twist("L")
 # c.twist("F")
 # c.twist("R")
 # c.twist("B")
 # I've done this with U=green, L=white, F=orange
-c.twist("L",1)
+# c.twist("L",1)
 # c.twist("F",3)
 # c.print_cube()
 c.print_cube()
