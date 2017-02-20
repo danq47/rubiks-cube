@@ -1,6 +1,8 @@
 import numpy as np
 import random as rd
-import copy
+
+# TODO
+# 1. modify the input of twist so we can give it a long string like LLFU'D which it would know to do left,left,front,up(anticlockwise),down
 
 class Cube:
 # We will represent the cube as a numpy array where we can access each
@@ -42,6 +44,7 @@ class Cube:
         self.z_anticlockwise = [ [0,-1,0], [1,0,0], [0,0,1] ]
         self.rotation_matrices = [self.x_clockwise,self.x_anticlockwise,self.y_clockwise,self.y_anticlockwise,self.z_clockwise,self.z_anticlockwise]
 
+        self.solution=[]
 
     def print_cube(self):
         x=[ 0 for _ in range(3) ]
@@ -72,9 +75,28 @@ class Cube:
         for _ in range(3):
             print("       ",all_faces[5][_])
 
+    def move(self,move_string): # this is where we can input algorithms etc and do a sequence of twists
+# a big letter means a clockwise twist and a small letter means clockwise twist of face and middle slice (i.e. layers=2)
+        move_dict={ "F":["F",1], "U":["U",1], "L":["L",1], "R":["R",1], "D":["D",1], "B":["B",1],\
+        "f":["F",2], "u":["U",2], "l":["L",2], "r":["R",2], "d":["D",2], "b":["B",2]}
+        
+        for move in move_string:
+            [ face , layers ] = move_dict[move]
+            self.twist(face, layers)
 
+    def twist(self,face,layers=1,clockwise=1,scramble=0): # twist around a given face, for how many layers. scramble is set to 0 usually, except if the computer is scrambling it then it's 1. otherise (scramble=0) we save the moves into self.solution
 
-    def twist(self,face,layers=1): # twist around a given face, for how many layers
+        if scramble == 0 and clockwise == 1 :
+            if layers > 1:
+                self.solution.append(face+str(layers))
+            else:
+                self.solution.append(face)
+        elif scramble ==0 and clockwise == 0 :
+            if layers > 1:
+                self.solution.append(face+str(layers)+"'")
+            else:
+                self.solution.append(face+"'")
+
 
         layers_to_add=layers-1 # will manually enter the ranges on the loops, and will just add (or subtract) this in
         face_to_matrix_and_ranges = { "F":[3,0,3,0,1+layers_to_add,0,3] ,\
@@ -82,7 +104,9 @@ class Cube:
         "U":[4,0,3,0,3,2-layers_to_add,3], "D":[5,0,3,0,3,0,1+layers_to_add] } # this array is [matrix_index, xlow, xhigh, ylow, yhigh, zlow, zhigh]
 
         [matrix_index, xlow, xhigh, ylow, yhigh, zlow, zhigh] = face_to_matrix_and_ranges[face]
-
+        if clockwise != 1 :
+            anticlockwise_matrices = { 0:1, 1:0, 2:3, 3:2, 4:5, 5:4 }
+            matrix_index=anticlockwise_matrices[matrix_index]
 # now rotate the cubies
         tmp_cube = np.array(self.cube) # save 
         for i in range(xlow,xhigh):
@@ -100,13 +124,13 @@ class Cube:
 
     def scramble(self):
 # method to scramble the cube
-        rd.seed(a=3) # set random seed for reproducability 
+        rd.seed(a=2) # set random seed for reproducability 
         rand = rd.randint(20,40)
         for i in range(rand):
             face = rd.choice(["F","B","L","R","U","D"]) # choose a random face
             n_turns = rd.choice([1,2,3]) # choose number of turns clockwise
             for _ in range(n_turns):
-                self.twist(face,1)
+                self.twist(face,1,1)
 
 
 # now we want to start adding in algorithms for solving the cube
@@ -215,82 +239,42 @@ class Cube:
                     self.twist(faces[piece],1)
 
 
+# edge flip 2 pieces in the front 
+    def edge_flip(self):
+        moves_to_undo=[]
+        f_col = abs(self.cube[1,0,1][1])
+        edge_flip_algo="RbBBBRbBBBRbBBBRbBBB"
+        # self.move(edge_flip_algo)
+
+        finished=False
+        while not finished:
+            while abs(self.cube[2,0,1][1]) == f_col :
+                self.move('FFF')
+                moves_to_undo.append("F")
+            self.move(edge_flip_algo)
+
+        #     print(abs(self.cube[2,0,1][1]),f_col)
+
+            if abs(self.cube[2,0,1][1]) == f_col and abs(self.cube[1,0,2][1]) == f_col\
+            and abs(self.cube[0,0,1][1]) == f_col and abs(self.cube[1,0,0][1]) == f_col :
+                finished=True
+        self.move(moves_to_undo)
 
 
 
-        # original_position = self.locate_piece(1,f_col,l_col)
-        # current_position  = self.locate_piece(0,f_col,l_col)
-
-# if piece isn't in the right place, 3 things can happen - either the piece is in the back layer, middle layer, or top layer
-
-
-        # if current_position == original_position : # it's already in the right place
-        #     pass
-
-
-        # elif current_position[1] == 2 : # if y = 2 it's in the back
-
-        #     cxz = [ current_position[0], current_position[2] ] # current xz
-        #     oxz = [ original_position[0], original_position[2] ] # original xz 
-
-        #     while cxz != oxz : # while it's not in the right face
-        #         self.twist("B",1) # rotate
-        #         current_position  = self.locate_piece(0,f_col,piece)
-        #         cxz=[current_position[0],current_position[2]]
 
 
 
-
-#         if current_position == original_position : # it's already in the right place
-#             pass
-
-#         else: # 3 scenarios. It can be either in F face but in the wrong spot, it can be in the middle layer, or it can be in the back layer
-
-# # it is in the front layer
-#             if current_position[1] == 0 : # piece is in the front layer, just the wrong position
-
-# #         for piece in piece_colours:
-
-
-#             original_position = self.locate_piece(1,f_col,piece)
-#             current_position  = self.locate_piece(0,f_col,piece)
-
-#             if current_position == original_position:
-#                 pass
-
-#             else:
-
-# # 2.a if piece is in F layer, put in back, otherwise 
-#                 if current_position[1] == 1:
-#                     self.to_back(current_position)
-#                     current_position  = self.locate_piece(0,f_col,piece)
-# # 2.b else if it's in the middle (i.e. between F and B) layer 
-
-# # 3. Rotate B so that it's on the right face
-
-#                 print(faces[piece])
-#                 print("current position:",current_position)
-#                 print("original position:",original_position)
-                
-#                 cxz=[current_position[0],current_position[2]] # current position x and z coordinates
-#                 oxz=[original_position[0],original_position[2]] # original position x and z coordinates
-
-#                 while cxz != oxz:
-#                     self.twist("B")
-#                     current_position  = self.locate_piece(0,f_col,piece)
-#                     cxz=[current_position[0],current_position[2]]
-#                     print("current position:",current_position)
-
-# # 4. Rotate it back into F
-
-#                 for _ in range(2):
-#                     self.twist(faces[piece])
-#                     self.solution.append("'")
 
 c = Cube()
+# c.move("fb")
 
 c.scramble()
 c.make_cross()
+c.edge_flip() 
+
+# c.twist("F",1,0)
+
 
 # c.twist("L")
 # c.twist("F")
