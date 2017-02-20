@@ -32,16 +32,6 @@ class Cube:
 
                     self.cube[x,y,z] = [ x_colour[x], y_colour[y], z_colour[z] ]
 
-# debug - checking the front is being printed properly
-        # self.cube[0][0][0][1]=1
-        # self.cube[1][0][0][1]=2
-        # self.cube[2][0][0][1]=3
-        # self.cube[2][0][1][1]=4
-        # self.cube[2][0][2][1]=5
-        # self.cube[1][0][2][1]=6
-        # self.cube[0][0][2][1]=7
-        # self.cube[0][0][1][1]=8
-        # self.cube[1][0][1][1]=9
         self.original_cube=self.cube # so we can check if pieces are in the correct place
         # set up some rotation matrices for later
         self.x_clockwise = [ [1,0,0], [0,0,1], [0,-1,0] ]
@@ -52,102 +42,36 @@ class Cube:
         self.z_anticlockwise = [ [0,-1,0], [1,0,0], [0,0,1] ]
         self.rotation_matrices = [self.x_clockwise,self.x_anticlockwise,self.y_clockwise,self.y_anticlockwise,self.z_clockwise,self.z_anticlockwise]
 
-    # def print_front(self):
-    #         x=[ 0 for _ in range(3) ]
-    #         xz=[x[:] for _ in range(3) ]
-    #         for x in range(3):
-    #             for z in range(3):
-    #                 xz[ 2-z ][x] = abs(self.cube[x,0,z][1])
-
-
-
 
     def print_cube(self):
-# redoing the printing stage "manually" like
-#[["U1","U2","U3"],["U8","U0","U4"],["U7","U6","U5"]]
-#[["L1","L2","L3"],["L8","L0","L4"],["L7","L6","L5"]]
-#[["F1","F2","F3"],["F8","F0","F4"],["F7","F6","F5"]] i.e. each face numbers go
-#[["R1","R2","R3"],["R8","R0","R4"],["R7","R6","R5"]] 1 2 3
-#[["B1","B2","B3"],["B8","B0","B4"],["B7","B6","B5"]] 8 0 4
-#[["D1","D2","D3"],["D8","D0","D4"],["D7","D6","D5"]] 7 6 5
-        # f0 = self.cube[1,0,1][1]
-        F1 = -self.cube[0][0][2][1]
-        F2 = -self.cube[1][0][2][1]
-        F3 = -self.cube[2][0][2][1]
-        F4 = -self.cube[2][0][1][1]
-        F5 = -self.cube[2][0][0][1]
-        F6 = -self.cube[1][0][0][1]
-        F7 = -self.cube[0][0][0][1]
-        F8 = -self.cube[0][0][1][1]
-        F0 = -self.cube[1][0][1][1]
-        F = [F1,F2,F3,F4,F5,F6,F7,F8,F0]
+        x=[ 0 for _ in range(3) ]
+        face_print=[x[:] for _ in range(3) ]
+        all_faces=np.array([face_print[:] for _ in range(6) ])
 
-        L1 = -self.cube[0][2][2][0]
-        L2 = -self.cube[0][1][2][0]
-        L3 = -self.cube[0][0][2][0]
-        L4 = -self.cube[0][0][1][0]
-        L5 = -self.cube[0][0][0][0]
-        L6 = -self.cube[0][1][0][0]
-        L7 = -self.cube[0][2][0][0]
-        L8 = -self.cube[0][2][1][0]
-        L0 = -self.cube[0][1][1][0]
-        L = [L1,L2,L3,L4,L5,L6,L7,L8,L0]
+        self.twist("D",3) # rotate so L is the first one in the list
+        for face in range(4): # going to store the face, and then rotate. will do this 4 times to get back to the beginning
+            for x in range(3):
+                for z in range(3): # z is the coordinate facing up 
+                    all_faces[face][ 2-z ][x] = abs(self.cube[x,0,z][1])
+            self.twist("U",3) # rotate whole cube clockwise
+        self.twist("U",3) # rotate back so F is facing the front again
+# ok now we have FLBR, need U and D
+        self.twist("L",3) # gets us U
+        for face in range(4,6):
+            for x in range(3):
+                for z in range(3):
+                    all_faces[face][ 2-z ][x] = abs(self.cube[x,0,z][1])
+            self.twist("L",3)
+            self.twist("L",3) # gets us D, and then finishes back on U
+        self.twist("R",3) # back to original orientation
 
-        R1 = self.cube[2][0][2][0]
-        R2 = self.cube[2][1][2][0]
-        R3 = self.cube[2][2][2][0]
-        R4 = self.cube[2][2][1][0]
-        R5 = self.cube[2][2][0][0]
-        R6 = self.cube[2][1][0][0]
-        R7 = self.cube[2][0][0][0]
-        R8 = self.cube[2][0][1][0]
-        R0 = self.cube[2][1][1][0]
-        R = [R1,R2,R3,R4,R5,R6,R7,R8,R0]
+        for _ in range(3):
+            print("       ",all_faces[4][_])
+        for _ in range(3):
+            print(all_faces[0][_],all_faces[1][_],all_faces[2][_],all_faces[3][_])
+        for _ in range(3):
+            print("       ",all_faces[5][_])
 
-        B1 = self.cube[2][2][2][1]
-        B2 = self.cube[1][2][2][1]
-        B3 = self.cube[0][2][2][1]
-        B4 = self.cube[0][2][1][1]
-        B5 = self.cube[0][2][0][1]
-        B6 = self.cube[1][2][0][1]
-        B7 = self.cube[2][2][0][1]
-        B8 = self.cube[2][2][1][1]
-        B0 = self.cube[1][2][1][1]
-        B = [B1,B2,B3,B4,B5,B6,B7,B8,B0]
-
-        U1 = self.cube[0][2][2][2]
-        U2 = self.cube[1][2][2][2]
-        U3 = self.cube[2][2][2][2]
-        U4 = self.cube[2][1][2][2]
-        U5 = self.cube[2][0][2][2]
-        U6 = self.cube[1][0][2][2]
-        U7 = self.cube[0][0][2][2]
-        U8 = self.cube[0][1][2][2]
-        U0 = self.cube[1][1][2][2]
-        U = [U1,U2,U3,U4,U5,U6,U7,U8,U0]
-
-        D1 = -self.cube[0][0][0][2]
-        D2 = -self.cube[1][0][0][2]
-        D3 = -self.cube[2][0][0][2]
-        D4 = -self.cube[2][1][0][2]
-        D5 = -self.cube[2][2][0][2]
-        D6 = -self.cube[1][2][0][2]
-        D7 = -self.cube[0][2][0][2]
-        D8 = -self.cube[0][1][0][2]
-        D0 = -self.cube[1][1][0][2]
-        D = [D1,D2,D3,D4,D5,D6,D7,D8,D0]
-
-        print("       ",U1,U2,U3)
-        print("       ",U8,U0,U4)
-        print("       ",U7,U6,U5)
-        print()
-        print(L1,L2,L3," ",F1,F2,F3," ",R1,R2,R3," ",B1,B2,B3)
-        print(L8,L0,L4," ",F8,F0,F4," ",R8,R0,R4," ",B8,B0,B4)
-        print(L7,L6,L5," ",F7,F6,F5," ",R7,R6,R5," ",B7,B6,B5)
-        print()
-        print("       ",D1,D2,D3)
-        print("       ",D8,D0,D4)
-        print("       ",D7,D6,D5)
 
 
     def twist(self,face,layers=1): # twist around a given face, for how many layers
@@ -347,10 +271,10 @@ c = Cube()
 # c.twist("R")
 # c.twist("B")
 # I've done this with U=green, L=white, F=orange
-c.twist2("L",1)
-c.twist2("F",3)
+c.twist("L",1)
+# c.twist("F",3)
+# c.print_cube()
 c.print_cube()
-# c.print_front()
 print("~~~~~~~~~~~~~~~~~~~~~~")
 # c.twist("B")
 # c.make_cross()
