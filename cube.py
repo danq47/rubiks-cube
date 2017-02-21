@@ -51,22 +51,22 @@ class Cube:
         face_print=[x[:] for _ in range(3) ]
         all_faces=np.array([face_print[:] for _ in range(6) ])
 
-        self.twist("D",3) # rotate so L is the first one in the list
+        self.twist("D",3,1,1) # rotate so L is the first one in the list
         for face in range(4): # going to store the face, and then rotate. will do this 4 times to get back to the beginning
             for x in range(3):
                 for z in range(3): # z is the coordinate facing up 
                     all_faces[face][ 2-z ][x] = abs(self.cube[x,0,z][1])
-            self.twist("U",3) # rotate whole cube clockwise
-        self.twist("U",3) # rotate back so F is facing the front again
+            self.twist("U",3,1,1) # rotate whole cube clockwise
+        self.twist("U",3,1,1) # rotate back so F is facing the front again
 # ok now we have FLBR, need U and D
-        self.twist("L",3) # gets us U
+        self.twist("L",3,1,1) # gets us U
         for face in range(4,6):
             for x in range(3):
                 for z in range(3):
                     all_faces[face][ 2-z ][x] = abs(self.cube[x,0,z][1])
-            self.twist("L",3)
-            self.twist("L",3) # gets us D, and then finishes back on U
-        self.twist("R",3) # back to original orientation
+            self.twist("L",3,1,1)
+            self.twist("L",3,1,1) # gets us D, and then finishes back on U
+        self.twist("R",3,1,1) # back to original orientation
 
         for _ in range(3):
             print("       ",all_faces[4][_])
@@ -79,9 +79,17 @@ class Cube:
 # a big letter means a clockwise twist and a small letter means clockwise twist of face and middle slice (i.e. layers=2)
         move_dict={ "F":["F",1], "U":["U",1], "L":["L",1], "R":["R",1], "D":["D",1], "B":["B",1],\
         "f":["F",2], "u":["U",2], "l":["L",2], "r":["R",2], "d":["D",2], "b":["B",2]}
-        
-        for move in move_string:
-            [ face , layers ] = move_dict[move]
+
+        for ixx in range(len(move_string) - 1):
+            if move_string[ixx] != "'" : # these are two modifiers, the dash means anticlockwise rotation and the 2 means 2 layers
+                if move_string[ixx+1] == "'" :
+                    clockwise = 0
+                else:
+                    clockwise = 1
+                [ face , layers ] = move_dict[ move_string[ixx] ]
+                self.twist(face, layers, clockwise)
+        if move_string[-1] != "'" :
+            [ face , layers ] = move_dict[ move_string[-1] ]
             self.twist(face, layers)
 
     def twist(self,face,layers=1,clockwise=1,scramble=0): # twist around a given face, for how many layers. scramble is set to 0 usually, except if the computer is scrambling it then it's 1. otherise (scramble=0) we save the moves into self.solution
@@ -130,7 +138,7 @@ class Cube:
             face = rd.choice(["F","B","L","R","U","D"]) # choose a random face
             n_turns = rd.choice([1,2,3]) # choose number of turns clockwise
             for _ in range(n_turns):
-                self.twist(face,1,1)
+                self.twist(face,1,1,1)
 
 
 # now we want to start adding in algorithms for solving the cube
@@ -173,7 +181,7 @@ class Cube:
 
         return pieces[0]
 
-    def to_back(self, position): # function to put a piece to the back
+    def side_to_back(self, position): # function to put a side piece to the back
 
         [x,y,z] = position
         if position[1] == 2 :
@@ -220,7 +228,7 @@ class Cube:
             else:
 
                 if current_position[1] < 2 : # it's not yet in the back
-                    self.to_back(current_position)
+                    self.side_to_back(current_position)
                     current_position  = self.locate_piece(0,f_col,piece)
 
 # now it's definitely in the back
@@ -243,17 +251,15 @@ class Cube:
     def edge_flip(self):
         moves_to_undo=[]
         f_col = abs(self.cube[1,0,1][1])
-        edge_flip_algo="RbBBBRbBBBRbBBBRbBBB"
+        edge_flip_algo="RbB'RbB'RbB'RbB'"
         # self.move(edge_flip_algo)
 
         finished=False
         while not finished:
             while abs(self.cube[2,0,1][1]) == f_col :
-                self.move('FFF')
+                self.move("F'")
                 moves_to_undo.append("F")
             self.move(edge_flip_algo)
-
-        #     print(abs(self.cube[2,0,1][1]),f_col)
 
             if abs(self.cube[2,0,1][1]) == f_col and abs(self.cube[1,0,2][1]) == f_col\
             and abs(self.cube[0,0,1][1]) == f_col and abs(self.cube[1,0,0][1]) == f_col :
@@ -261,21 +267,95 @@ class Cube:
         self.move(moves_to_undo)
 
 
+    def corner_to_back(self,location): # function to put a corner piece to the back face
+
+        [x,y,z] = position
+        if position[1] == 2 :
+            pass # it's already in the back
+
+        elif position[1] == 1 : # it's in the middle slice?? this should never happem
+            pass
+
+        elif position[1] == 0 : # it's in the front
+            face_to_turn = { (2,0):"D", (2,2):"R", (0,2):"U", (0,0):"L" } # choose which face to turn based on [x,z]
+            self.twist(face_to_turn[(x,z)],1) # twist to bottom
+            self.twist("B",1) # twist away
+            self.twist(face_to_turnp(x,z),1,0) # return the side piece by rotating the original face back anticlockwise
+
+    def solve_top_corners(self):
+
+        u_col = abs(self.cube[1,1,2][2])
+        d_col = abs(self.cube[1,1,0][2])
+        f_col = abs(self.cube[1,0,1][1])
+        b_col = abs(self.cube[1,2,1][1])
+        l_col = abs(self.cube[0,1,1][0])
+        r_col = abs(self.cube[2,1,1][0])
+
+# 1. Find the pieces
+
+        piece_colours = [ [r_col,d_col], [d_col,l_col], [l_col,u_col], [u_col,r_col] ]
+        faces = { r_col:"R", d_col:"D", l_col:"L", u_col:"U" }
+
+        for piece in piece_colours:
+
+            original_position = self.locate_piece(1,f_col,piece[0],piece[1])
+            current_position  = self.locate_piece(0,f_col,piece[0],piece[1])
+
+            if current_position == original_position : # piece is already in the right place
+                pass
+
+            else:
+                if current_position[1] == 0 : # it's in the front but in the wrong spot, put to back
+                    self.corner_to_back()
+                    current_position = self.locate_piece(0,f_col,piece[0],piece[1])
+
+# now it's definitely in the back
+                cxz = [ current_position[0], current_position[2] ] # current xz
+                oxz = [ original_position[0], original_position[2] ] # original xz
+                while cxz != oxz : # while not in the right face
+                    self.twist("B",1) # rotate
+                    current_position = self.locate_piece(0,f_col,piece[0],piece[1])
+                    cxz=[current_position[0],current_position[2]]
+
+# now it's in the right position, it just needs to be moved into the front face. we'll make a mini algo to do this
+                face_to_turn={ (2,0):"R", (2,2):"U", (0,2):"L", (0,0):"D" }
+                self.twist("B",1,0)
+                self.twist(face_to_turn[ ( cxz[0], cxz[1] ) ], 1 ,0 )
+                self.twist("B",1)
+                self.twist(face_to_turn[ ( cxz[0], cxz[1] ) ], 1 ,1 )
 
 
+    def corner_flip(self): # flip all 4 corners (if necessary) on the front face. We'll flip everything in the bottom right corner, rotating the face around
+        moves_to_undo=[]
+        f_col = abs(self.cube[1,0,1][1])
+        corner_flip_algo="RB'R'BRB'R'B"
 
+        finished=False
+        while not finished:
+            while abs(self.cube[2,0,0][1]) != f_col :
+                self.move(corner_flip_algo) # flips the corner, now need to move on and check the next one
 
+            self.move("F'")
+            moves_to_undo.append("F")
 
-c = Cube()
+            if abs(self.cube[2,0,0][1]) == f_col and abs(self.cube[2,0,2][1]) == f_col\
+            and abs(self.cube[0,0,0][1]) == f_col and abs(self.cube[0,0,2][1]) == f_col :
+                finished=True
+        self.move(moves_to_undo)
+
+c=Cube()
 # c.move("fb")
-
+# print(c.locate_piece(1,1,3,2))
 c.scramble()
 c.make_cross()
 c.edge_flip() 
-
+c.print_cube()
+print("~~~~~~~~~~~~~~~~~~~~~~")
+c.solve_top_corners()
+c.corner_flip()
 # c.twist("F",1,0)
 
-
+# 
 # c.twist("L")
 # c.twist("F")
 # c.twist("R")
@@ -285,7 +365,9 @@ c.edge_flip()
 # c.twist("F",3)
 # c.print_cube()
 c.print_cube()
+print(len(c.solution))
 print("~~~~~~~~~~~~~~~~~~~~~~")
+print(" ".join(c.solution))
 # c.twist("B")
 # c.make_cross()
 # c.print_cube()
