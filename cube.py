@@ -328,7 +328,7 @@ class Cube:
     def corner_flip(self): # flip all 4 corners (if necessary) on the front face. We'll flip everything in the bottom right corner, rotating the face around
         moves_to_undo=[]
         f_col = abs(self.cube[1,0,1][1])
-        corner_flip_algo="RB'R'BRB'R'B"
+        corner_flip_algo="RD'R'DRD'R'D"
 
         finished=False
         while not finished:
