@@ -47,6 +47,15 @@ class Cube:
 
         self.solution=[]
 
+    def get_colours_udfblr(self):
+        u_col = abs(self.cube[1,1,2][2])
+        d_col = abs(self.cube[1,1,0][2])
+        f_col = abs(self.cube[1,0,1][1])
+        b_col = abs(self.cube[1,2,1][1])
+        l_col = abs(self.cube[0,1,1][0])
+        r_col = abs(self.cube[2,1,1][0])
+        return [u_col,d_col,f_col,b_col,l_col,r_col]
+
     def print_cube(self):
         x=[ 0 for _ in range(3) ]
         face_print=[x[:] for _ in range(3) ]
@@ -89,6 +98,7 @@ class Cube:
                     clockwise = 1
                 [ face , layers ] = move_dict[ move_string[ixx] ]
                 self.twist(face, layers, clockwise)
+
         if move_string[-1] != "'" :
             [ face , layers ] = move_dict[ move_string[-1] ]
             self.twist(face, layers)
@@ -202,12 +212,7 @@ class Cube:
 
     def make_cross(self):
 
-        u_col = abs(self.cube[1,1,2][2])
-        d_col = abs(self.cube[1,1,0][2])
-        f_col = abs(self.cube[1,0,1][1])
-        b_col = abs(self.cube[1,2,1][1])
-        l_col = abs(self.cube[0,1,1][0])
-        r_col = abs(self.cube[2,1,1][0])
+        [u_col,d_col,f_col,b_col,l_col,r_col] = self.get_colours_udfblr()
 # try find FL piece first. should be at (0,0,1). First we'll put it into the bottom (y=2) face
 # 3 steps - (1) find the piece, (2) put it in the bottom, (3) rotate so that it is in the right face,
 # (4) rotate the face (i.e. here L) until the piece is in the correct position, (5) if it's not already
@@ -265,7 +270,8 @@ class Cube:
             if abs(self.cube[2,0,1][1]) == f_col and abs(self.cube[1,0,2][1]) == f_col\
             and abs(self.cube[0,0,1][1]) == f_col and abs(self.cube[1,0,0][1]) == f_col :
                 finished=True
-        self.move(moves_to_undo)
+        if moves_to_undo != [] :
+            self.move(moves_to_undo)
 
 
     def corner_to_back(self,position): # function to put a corner piece to the back face
@@ -285,12 +291,7 @@ class Cube:
 
     def solve_top_corners(self):
 
-        u_col = abs(self.cube[1,1,2][2])
-        d_col = abs(self.cube[1,1,0][2])
-        f_col = abs(self.cube[1,0,1][1])
-        b_col = abs(self.cube[1,2,1][1])
-        l_col = abs(self.cube[0,1,1][0])
-        r_col = abs(self.cube[2,1,1][0])
+        [u_col,d_col,f_col,b_col,l_col,r_col] = self.get_colours_udfblr()
 
 # 1. Find the pieces
 
@@ -345,10 +346,15 @@ class Cube:
         self.move(moves_to_undo)
 
 
+# next move is to solve the second layer i.e. the one between F and B
+    # def second_layer(self):
 
 
 
     def solve(self):
+        self.scramble()
+        self.scramble()
+        self.scramble()
         self.scramble()
         self.print_cube()
         print("~~~~~~~~~~~~~~~~~~~")
