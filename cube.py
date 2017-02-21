@@ -2,7 +2,8 @@ import numpy as np
 import random as rd
 
 # TODO
-# 1. modify the input of twist so we can give it a long string like LLFU'D which it would know to do left,left,front,up(anticlockwise),down
+####### 1. modify the input of twist so we can give it a long string like LLFU'D which it would know to do left,left,front,up(anticlockwise),down
+# 2. probably change it so we put all the pieces in place first, then we can go about rotating all cubies into their right positions
 
 class Cube:
 # We will represent the cube as a numpy array where we can access each
@@ -132,7 +133,7 @@ class Cube:
 
     def scramble(self):
 # method to scramble the cube
-        rd.seed(a=2) # set random seed for reproducability 
+        rd.seed(a=0) # set random seed for reproducability 
         rand = rd.randint(20,40)
         for i in range(rand):
             face = rd.choice(["F","B","L","R","U","D"]) # choose a random face
@@ -267,7 +268,7 @@ class Cube:
         self.move(moves_to_undo)
 
 
-    def corner_to_back(self,location): # function to put a corner piece to the back face
+    def corner_to_back(self,position): # function to put a corner piece to the back face
 
         [x,y,z] = position
         if position[1] == 2 :
@@ -280,7 +281,7 @@ class Cube:
             face_to_turn = { (2,0):"D", (2,2):"R", (0,2):"U", (0,0):"L" } # choose which face to turn based on [x,z]
             self.twist(face_to_turn[(x,z)],1) # twist to bottom
             self.twist("B",1) # twist away
-            self.twist(face_to_turnp(x,z),1,0) # return the side piece by rotating the original face back anticlockwise
+            self.twist(face_to_turn[(x,z)],1,0) # return the side piece by rotating the original face back anticlockwise
 
     def solve_top_corners(self):
 
@@ -306,7 +307,7 @@ class Cube:
 
             else:
                 if current_position[1] == 0 : # it's in the front but in the wrong spot, put to back
-                    self.corner_to_back()
+                    self.corner_to_back(current_position)
                     current_position = self.locate_piece(0,f_col,piece[0],piece[1])
 
 # now it's definitely in the back
@@ -343,36 +344,34 @@ class Cube:
                 finished=True
         self.move(moves_to_undo)
 
+
+
+
+
+    def solve(self):
+        self.scramble()
+        self.print_cube()
+        print("~~~~~~~~~~~~~~~~~~~")
+        self.make_cross()
+        self.print_cube()
+        print("~~~~~~~~~~~~~~~~~~~")
+        self.edge_flip()
+        self.print_cube()
+        print("~~~~~~~~~~~~~~~~~~~")
+        self.solve_top_corners()
+        self.print_cube()
+        print("~~~~~~~~~~~~~~~~~~~")
+        self.corner_flip()
+        self.print_cube()
+        print("~~~~~~~~~~~~~~~~~~~")
+        print(len(self.solution))
+        print(" ".join(self.solution))
+
+
+
 c=Cube()
-# c.move("fb")
-# print(c.locate_piece(1,1,3,2))
-c.scramble()
-c.make_cross()
-c.edge_flip() 
-c.print_cube()
-print("~~~~~~~~~~~~~~~~~~~~~~")
-c.solve_top_corners()
-c.corner_flip()
-# c.twist("F",1,0)
 
-# 
-# c.twist("L")
-# c.twist("F")
-# c.twist("R")
-# c.twist("B")
-# I've done this with U=green, L=white, F=orange
-# c.twist("L",1)
-# c.twist("F",3)
-# c.print_cube()
-c.print_cube()
-print(len(c.solution))
-print("~~~~~~~~~~~~~~~~~~~~~~")
-print(" ".join(c.solution))
-# c.twist("B")
-# c.make_cross()
-# c.print_cube()
-# print(c.solution)
-
+c.solve()
 
 
 
