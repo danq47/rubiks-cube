@@ -386,12 +386,17 @@ class Cube:
         piece_colours = [ [r_col,d_col], [d_col,l_col], [l_col,u_col], [u_col,r_col] ]
         face_to_move= { (1,0):"D" , (2,1):"R" , (1,2):"U" , (0,1):"L" }
         start_algorithm = { r_col:(2,1) , u_col:(1,2) , l_col:(0,1) , d_col:(1,0) }  # this is the position we need to get each piece into before performing base_algorithm_right()
+        faces= { r_col:"R", l_col:"L", d_col:"D", u_col:"U" }
 
         for piece in piece_colours:
             original_position = self.locate_piece( 1 , piece[0] , piece[1] )
             current_position  = self.locate_piece( 0 , piece[0] , piece[1] )
+            oriented_correctly = True
+            for _ in range(3):
+                if self.cube[current_position][_] != self.original_cube[current_position][_] : # this checks it's oriented correctly
+                    oriented_correctly = False
 
-            if current_position == original_position :
+            if current_position == original_position and oriented_correctly :
                 pass
 
             else:
@@ -407,14 +412,28 @@ class Cube:
 # # it's in the right position, now just need to do algorithm a1
                 self.a1_left(face_to_move[cxz])
 
-    # def
+# now we need to check that it's oriented correctly
+                current_position  = self.locate_piece( 0 , piece[0] , piece[1] )
+                oriented_correctly = True
+                for _ in range(3):
+                    if self.cube[current_position][_] != self.original_cube[current_position][_] : # this checks it's oriented correctly
+                        oriented_correctly = False
 
+                if oriented_correctly == False : 
+                    self.second_layer_edge_flip_left( faces[ piece[0] ] )
+
+
+
+    def second_layer_edge_flip_left(self,face): # will check all 4 middle layer edge pieces (by looking at the left piece on each face)
+        self.a1_left(face)
+        self.move("BB")
+        self.a1_left(face)
 
     def solve(self):
         self.scramble()
-        self.scramble()
         # self.scramble()
-        self.scramble()
+        # self.scramble()
+        # self.scramble()
         # print("INITIAL")
         # self.print_cube()
         self.make_cross()
@@ -424,10 +443,7 @@ class Cube:
         self.solve_top_corners()
         # self.print_cube()
         self.corner_flip()
-        print("BEFORE 2nd layer")
-        self.print_cube()
         self.solve_second_layer()
-        print("AFTER 2nd layer")
         self.print_cube()
         print(len(self.solution))
         print(" ".join(self.solution))
