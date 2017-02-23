@@ -60,6 +60,7 @@ class Cube:
         x=[ 0 for _ in range(3) ]
         face_print=[x[:] for _ in range(3) ]
         all_faces=np.array([face_print[:] for _ in range(6) ])
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
         self.twist("D",3,1,1) # rotate so L is the first one in the list
         for face in range(4): # going to store the face, and then rotate. will do this 4 times to get back to the beginning
@@ -84,6 +85,7 @@ class Cube:
             print(all_faces[0][_],all_faces[1][_],all_faces[2][_],all_faces[3][_])
         for _ in range(3):
             print("       ",all_faces[5][_])
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
     def move(self,move_string): # this is where we can input algorithms etc and do a sequence of twists
 # a big letter means a clockwise twist and a small letter means clockwise twist of face and middle slice (i.e. layers=2)
@@ -346,30 +348,87 @@ class Cube:
         self.move(moves_to_undo)
 
 
-# next move is to solve the second layer i.e. the one between F and B
-    # def second_layer(self):
+# for a general face looking at it straight on that looks like
+# 7 8 9
+# 4 5 6
+# 1 2 3
+# this algorithm puts 2 into 6, and keeps 789.
 
+    def a1_right(self,face): # the base algorithm for putting a piece into the second layer from the bottom (to the right) 
+        faces_dict={ "D":("D","R"), "R":("R","U"), "U":("U","L"), "L":("L","D") } # these are the faces involved in the algorithm.
+        f=faces_dict[face] # this stores the two faces we need in f
+        algorithm=[ "B'", f[1] , "'", "B" , f[1] , "B", f[0] , "B'" , f[0] , "'" ]
+        algorithm="".join(algorithm)
+        self.move(algorithm)
+
+    def a1_left(self,face): # same as above, except we're putting piece 2 to 4
+        faces_dict={ "D":("D","L"), "L":("L","U"), "U":("U","R"), "R":("R","D") } # these are the faces involved in the algorithm.
+        f=faces_dict[face] 
+        algorithm=[ "B", f[1] , "B'" , f[1] , "'", "B'" , f[0] , "'" , "B" , f[0] ]
+        algorithm="".join(algorithm)
+        self.move(algorithm)
+
+
+# move the pieces from the middle layer to the back (for example if we have two middle layer pieces swapped)
+    def middle_layer_to_back(self,position): 
+
+        [x,y,z] = position
+            
+        face_to_move = { (2,0):"D", (2,2):"R" , (0,2):"U" , (0,0):"L" } # choose which face to turn based on [x,z]
+        
+
+        self.a1_right(face_to_move[(x,z)])
+
+# solve the second layer
+    def solve_second_layer(self):
+
+        [u_col,d_col,f_col,b_col,l_col,r_col] = self.get_colours_udfblr()        
+        piece_colours = [ [r_col,d_col], [d_col,l_col], [l_col,u_col], [u_col,r_col] ]
+        face_to_move= { (1,0):"D" , (2,1):"R" , (1,2):"U" , (0,1):"L" }
+        start_algorithm = { r_col:(2,1) , u_col:(1,2) , l_col:(0,1) , d_col:(1,0) }  # this is the position we need to get each piece into before performing base_algorithm_right()
+
+        for piece in piece_colours:
+            original_position = self.locate_piece( 1 , piece[0] , piece[1] )
+            current_position  = self.locate_piece( 0 , piece[0] , piece[1] )
+
+            if current_position == original_position :
+                pass
+
+            else:
+                if current_position[1] == 1 : # the piece is in the 2nd layer already, but in the wrong spot
+                    self.middle_layer_to_back(current_position)
+                    current_position  = self.locate_piece( 0 , piece[0] , piece[1] )
+# now it's definitely in the back layer, need to rotate B until it's in the right face to do an algorithm
+                cxz = ( current_position[0] , current_position[2] )
+                while cxz != start_algorithm[piece[0]] : # while the piece isn't in the correct position in the back layer
+                    self.move("B")
+                    current_position  = self.locate_piece( 0 , piece[0] , piece[1] )
+                    cxz = ( current_position[0] , current_position[2] )
+# # it's in the right position, now just need to do algorithm a1
+                self.a1_left(face_to_move[cxz])
+
+    # def
 
 
     def solve(self):
         self.scramble()
         self.scramble()
+        # self.scramble()
         self.scramble()
-        self.scramble()
-        self.print_cube()
-        print("~~~~~~~~~~~~~~~~~~~")
+        # print("INITIAL")
+        # self.print_cube()
         self.make_cross()
-        self.print_cube()
-        print("~~~~~~~~~~~~~~~~~~~")
+        # self.print_cube()
         self.edge_flip()
-        self.print_cube()
-        print("~~~~~~~~~~~~~~~~~~~")
+        # self.print_cube()
         self.solve_top_corners()
-        self.print_cube()
-        print("~~~~~~~~~~~~~~~~~~~")
+        # self.print_cube()
         self.corner_flip()
+        print("BEFORE 2nd layer")
         self.print_cube()
-        print("~~~~~~~~~~~~~~~~~~~")
+        self.solve_second_layer()
+        print("AFTER 2nd layer")
+        self.print_cube()
         print(len(self.solution))
         print(" ".join(self.solution))
 
