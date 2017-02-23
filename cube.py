@@ -429,11 +429,99 @@ class Cube:
         self.move("BB")
         self.a1_left(face)
 
+
+    def bottom_cross(self): # make a cross on the bottom
+
+        [u_col,d_col,f_col,b_col,l_col,r_col] = self.get_colours_udfblr()   
+        piece_colours = [ r_col , d_col , l_col , u_col ]
+
+# first check if we've got a cross at all (even if we need to rotate B)
+        cross = False
+        ixx=0
+        while ixx < 4 and cross == False :
+            original_position = [self.locate_piece( 1 , piece , b_col ) for piece in piece_colours ]
+            current_position  = [self.locate_piece( 0 , piece , b_col ) for piece in piece_colours ]
+
+            if original_position == current_position : 
+                cross = True
+            else:
+                self.move("B")
+            ixx+=1
+
+# if we've got a cross, great, we'll just skip straight to the end stage (where we reorient the cross)
+        if cross == False : # now we've got two cases - either we have a configuration where only one piece is in the right position, and we can work with this, or else we can't get this 1 right position, and we will have to appply the algorithm twice
+
+            start_position = False
+            while start_position == False :
+                
+                ixx = 0
+                while ixx < 4 and start_position == False :
+                    original_position = [ self.locate_piece( 1 , piece , b_col ) for piece in piece_colours]
+                    current_position = [ self.locate_piece( 0 , piece , b_col ) for piece in piece_colours]
+                    check_positions=0 # check how many of the cross pieces are in the right place
+                    
+                    for _ in range(4):
+                        if original_position[_] == current_position[_] :
+                            check_positions += 1
+
+                    if check_positions == 1 :
+                        start_position = True
+                    else:
+                        self.move("B")
+                    ixx+=1
+# if we finish the inner while loop without a start position we can just do the algorithm and then we will definitely have a start position next time round
+                if start_position == False :
+                    self.a1_right("D")
+                    self.move("B'")
+                    self.a1_left("R")
+
+# now we're in a position to do the algorithm, we just need to work out which direction and which faces
+
+
+
+
+#         for piece in piece_colours:
+
+# # first check if we've got a cross at all (even if we need to rotate B)
+#             cross=False
+#             ixx=0
+#             while ixx < 4 and cross == False :
+#                 original_position = self.locate_piece( 1 , piece , b_col )
+#                 current_position  = self.locate_piece( 0 , piece , b_col )
+#                 if original_position == current_position : 
+#                     cross = True
+#                 else:
+#                     self.move("B")
+
+#             if cross == True : # we're done - skip to the end where we reorient everything
+#                 pass
+
+#             else: # 2 cases here. 1: there is a possible configuration where only one of the cross pieces is in the right place. this is easier, we can do the algorithm straight away. otherwise we'll have to do it twice
+# # look for a suitable starting position
+
+#                 start_position=False
+#                 ixx=0
+#                 while ixx < 4 and start_position == False :
+
+
+
+
+
+
+
+
+
     def solve(self):
         self.scramble()
-        # self.scramble()
-        # self.scramble()
-        # self.scramble()
+        self.scramble()
+        self.scramble()
+        self.scramble()
+        self.scramble()
+        self.scramble()
+        self.scramble()
+        self.scramble()
+        self.scramble()
+
         # print("INITIAL")
         # self.print_cube()
         self.make_cross()
@@ -445,14 +533,28 @@ class Cube:
         self.corner_flip()
         self.solve_second_layer()
         self.print_cube()
+        self.bottom_cross()
+        self.print_cube()
         print(len(self.solution))
         print(" ".join(self.solution))
+
 
 
 
 c=Cube()
 
 c.solve()
+
+# total=0.0
+# n=20
+
+# for _ in range(n):
+#     x=Cube()
+#     x.solve()
+#     total+=len(x.solution)
+#     del(x)
+
+# print(total/n)
 
 
 
