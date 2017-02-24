@@ -280,6 +280,8 @@ class Cube:
             self.move(moves_to_undo)
 
 
+
+
     def corner_to_back(self,position): # function to put a corner piece to the back face
 
         [x,y,z] = position
@@ -511,7 +513,12 @@ class Cube:
             self.a1_right(algo_left[start_face][1])
             self.move("B'")
 
-
+# reorient the edges
+        self.twist("L",3)
+        self.twist("L",3) # turn the cube over so the back is facing us - now we can flip the edges
+        self.edge_flip()
+        self.twist("R",3)
+        self.twist("R",3)
 
 
 
