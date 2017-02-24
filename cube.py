@@ -56,6 +56,10 @@ class Cube:
         r_col = abs(self.cube[2,1,1][0])
         return [u_col,d_col,f_col,b_col,l_col,r_col]
 
+    def opposite_face(self,face):
+        opposites = { "U":"D", "D":"U", "L":"R", "R":"L", "F":"B", "B":"F" }
+        return opposites[face]
+
     def print_cube(self):
         x=[ 0 for _ in range(3) ]
         face_print=[x[:] for _ in range(3) ]
@@ -434,6 +438,9 @@ class Cube:
 
         [u_col,d_col,f_col,b_col,l_col,r_col] = self.get_colours_udfblr()   
         piece_colours = [ r_col , d_col , l_col , u_col ]
+        faces= { r_col:"R", l_col:"L", d_col:"D", u_col:"U" , "R":r_col, "L":l_col, "D":d_col, "U":u_col }
+        algo_right = { "L":("L","D"), "D":("D","R"), "R":("R","U"), "U":("U","L") }
+        algo_left =  { "L":("L","U"), "U":("U","R"), "R":("R","D"), "D":("D","L") }
 
 # first check if we've got a cross at all (even if we need to rotate B)
         cross = False
@@ -476,32 +483,34 @@ class Cube:
                     self.a1_left("R")
 
 # now we're in a position to do the algorithm, we just need to work out which direction and which faces
+        start_face=""
+        for piece in piece_colours:
+            original_position = self.locate_piece( 1 , piece , b_col )
+            current_position  = self.locate_piece( 0 , piece , b_col )
+            if current_position == original_position :
+                start_face = faces[piece]
+                break
+
+        start_right=False
+        self.move("B")
+        if self.locate_piece( 0 , faces[self.opposite_face(start_face)] , b_col ) == self.locate_piece( 1 , faces[self.opposite_face(start_face)] , b_col ): # this figures out which direction to start it, by rotating B once, and checking if the edge piece on the opposite side has gon to the right spot, if so, we've moved in the wrong direction
+            start_right = True
+        else:
+            start_left = True
+        self.move("B'")
 
 
+        if start_right:
+            self.a1_right(algo_right[start_face][0])
+            self.move("B'")
+            self.a1_left(algo_right[start_face][1])
+            self.move("B")
+        else:
+            self.a1_left(algo_left[start_face][0])
+            self.move("B")
+            self.a1_right(algo_left[start_face][1])
+            self.move("B'")
 
-
-#         for piece in piece_colours:
-
-# # first check if we've got a cross at all (even if we need to rotate B)
-#             cross=False
-#             ixx=0
-#             while ixx < 4 and cross == False :
-#                 original_position = self.locate_piece( 1 , piece , b_col )
-#                 current_position  = self.locate_piece( 0 , piece , b_col )
-#                 if original_position == current_position : 
-#                     cross = True
-#                 else:
-#                     self.move("B")
-
-#             if cross == True : # we're done - skip to the end where we reorient everything
-#                 pass
-
-#             else: # 2 cases here. 1: there is a possible configuration where only one of the cross pieces is in the right place. this is easier, we can do the algorithm straight away. otherwise we'll have to do it twice
-# # look for a suitable starting position
-
-#                 start_position=False
-#                 ixx=0
-#                 while ixx < 4 and start_position == False :
 
 
 
@@ -519,8 +528,8 @@ class Cube:
         self.scramble()
         self.scramble()
         self.scramble()
-        self.scramble()
-        self.scramble()
+        # self.scramble()
+        # self.scramble()
 
         # print("INITIAL")
         # self.print_cube()
