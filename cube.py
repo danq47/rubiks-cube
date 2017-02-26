@@ -268,9 +268,11 @@ class Cube:
 
         finished=False
         while not finished:
-            while abs(self.cube[2,0,1][1]) == f_col :
+            ixx = 0
+            while abs(self.cube[2,0,1][1]) == f_col and ixx < 4:
                 self.move("F'")
                 moves_to_undo.append("F")
+                ixx += 1
             self.move(edge_flip_algo)
 
             if abs(self.cube[2,0,1][1]) == f_col and abs(self.cube[1,0,2][1]) == f_col\
@@ -385,7 +387,7 @@ class Cube:
         faces_dict = { "D":("D","R","L"), "R":("R","U","D"), "U":("U","L","R"), "L":("L","D","U") }
         self.a1_left(face)
         self.move("B")
-        self.a1_right(faces_dict[face][1])
+        self.a1_right(faces_dict[face][2])
         self.move("B'")
 
 
@@ -397,11 +399,8 @@ class Cube:
 # 1 2 3    1 2 7
 
     def permute_corners_anticlockwise(self,face): # a2_right then a2_left. 
-
         self.a2_right(face)
-        self.move("B")
         self.a2_left(face)
-        self.move("B'")
 
 # the same as above but
 # 7 8 9    1 8 7
@@ -409,9 +408,7 @@ class Cube:
 # 1 2 3    9 2 3
     def permute_corners_clockwise(self,face): # a2_right then a2_left
         self.a2_right(face)
-        self.move("B")
         self.a2_left(face)
-        self.move("B'")
 
 # move the pieces from the middle layer to the back (for example if we have two middle layer pieces swapped)
     def middle_layer_to_back(self,position): 
@@ -525,32 +522,35 @@ class Cube:
 
 
 # now we're in a position to do the algorithm, we just need to work out which direction and which faces
-        start_face=""
-        for piece in piece_colours:
-            original_position = self.locate_piece( 1 , piece , b_col )
-            current_position  = self.locate_piece( 0 , piece , b_col )
-            if current_position == original_position :
-                start_face = faces[piece]
-                break
+            start_face=""
+            for piece in piece_colours:
+                original_position = self.locate_piece( 1 , piece , b_col )
+                current_position  = self.locate_piece( 0 , piece , b_col )
+                if current_position == original_position :
+                    start_face = faces[piece]
+                    break
 
-        start_right=False
-        self.move("B") # move to check which direction we should start the algorithm. if the opposite face has the piece in the right position then this is the wrong first move - we'll start the algorithm to the left instead
-        check_1 = self.locate_piece( 0 , faces[self.opposite_face(start_face)] , b_col ) # 
-        check_2 = self.locate_piece( 1 , faces[self.opposite_face(start_face)] , b_col ) # this figures out which direction to start it, by rotating B once, and checking if the edge piece on the opposite side has gon to the right spot, if so, we've moved in the wrong direction
-        start_right = check_1 == check_2 # start the algorithm to the right if these ar
-        self.move("B'") # undo the checking move
+            start_right=False
+            self.move("B") # move to check which direction we should start the algorithm. if the opposite face has the piece in the right position then this is the wrong first move - we'll start the algorithm to the left instead
+            check_1 = self.locate_piece( 0 , faces[self.opposite_face(start_face)] , b_col ) # 
+            check_2 = self.locate_piece( 1 , faces[self.opposite_face(start_face)] , b_col ) # this figures out which direction to start it, by rotating B once, and checking if the edge piece on the opposite side has gon to the right spot, if so, we've moved in the wrong direction
+            start_right = check_1 == check_2 # start the algorithm to the right if these ar
+            self.move("B'") # undo the checking move    
 
-        if start_right : 
-            self.a2_right(start_face) 
-        else :
-            self.a2_left(start_face) #probably a more pythonic way of writing this
+            if start_right : 
+                self.a2_right(start_face) 
+            else :
+                self.a2_left(start_face) #probably a more pythonic way of writing this
+
 
 # reorient the edges
+
         self.twist("L",3)
         self.twist("L",3) # turn the cube over so the back is facing us - now we can flip the edges
         self.edge_flip()
         self.twist("R",3)
         self.twist("R",3)
+
 
 
     def solve_bottom_corners(self):
@@ -571,13 +571,14 @@ class Cube:
 # 3 things can happen here - either all are in place, and we dont need to do anything, none are, so we have to do the algorithm randomly, or one is, and then we can do the algorithm
 
         if sum(corners_in_place) == 0 : # no corners are in place, do the algorithm randomly and one will end up in place
-            self.permute_corners_clockwise("U")
+            self.permute_corners_anticlockwise("U")
 
         original_position = [ self.locate_piece( 1 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
         current_position  = [ self.locate_piece( 0 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
                
         corners_in_place = [ 1 if pair[0] == pair[1] else 0 for pair in zip( current_position, original_position) ] # return an array of 4 1s or 0s - 1 if the corner is in the right position and 0 if not
         print(corners_in_place)
+
 
 
 
@@ -592,6 +593,7 @@ class Cube:
         self.scramble()
         self.scramble()
         self.scramble()
+        # self.scramble()
         # self.scramble()
         # self.scramble()
 
@@ -617,26 +619,9 @@ class Cube:
 
 
 c=Cube()
-
+# c.print_cube()
+# c.permute_corners_anticlockwise("D")
+# c.print_cube()
 c.solve()
-solution=c.solution
-# print(len(solution))
-# print("".join(solution))
-
-# def cleanup(solution_list):
-
-#     for ixx in range(len(solution_list)):
-
-# total=0.0
-# n=20
-
-# for _ in range(n):
-#     x=Cube()
-#     x.solve()
-#     total+=len(x.solution)
-#     del(x)
-
-# print(total/n)
-
-
+# solution=c.solution
 
