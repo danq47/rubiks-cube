@@ -406,9 +406,9 @@ class Cube:
 # 7 8 9    1 8 7
 # 4 5 6 to 4 5 6
 # 1 2 3    9 2 3
-    def permute_corners_clockwise(self,face): # a2_right then a2_left
-        self.a2_right(face)
+    def permute_corners_clockwise(self,face): # a2_left then a2_right
         self.a2_left(face)
+        self.a2_right(face)
 
 # move the pieces from the middle layer to the back (for example if we have two middle layer pieces swapped)
     def middle_layer_to_back(self,position): 
@@ -566,20 +566,51 @@ class Cube:
         current_position  = [ self.locate_piece( 0 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
                
         corners_in_place = [ 1 if pair[0] == pair[1] else 0 for pair in zip( current_position, original_position) ] # return an array of 4 1s or 0s - 1 if the corner is in the right position and 0 if not
-        print(corners_in_place)
 
 # 3 things can happen here - either all are in place, and we dont need to do anything, none are, so we have to do the algorithm randomly, or one is, and then we can do the algorithm
 
-        if sum(corners_in_place) == 0 : # no corners are in place, do the algorithm randomly and one will end up in place
-            self.permute_corners_anticlockwise("U")
+        if sum(corners_in_place) == 4 : # we'e OK - all in place
+            pass
 
-        original_position = [ self.locate_piece( 1 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
-        current_position  = [ self.locate_piece( 0 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
-               
-        corners_in_place = [ 1 if pair[0] == pair[1] else 0 for pair in zip( current_position, original_position) ] # return an array of 4 1s or 0s - 1 if the corner is in the right position and 0 if not
-        print(corners_in_place)
+        else:
 
+            if sum(corners_in_place) == 0 : # no corners are in place, do the algorithm randomly and one will end up in place
+                self.permute_corners_anticlockwise("U") 
 
+            original_position = [ self.locate_piece( 1 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
+            current_position  = [ self.locate_piece( 0 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
+                   
+            corners_in_place = [ 1 if pair[0] == pair[1] else 0 for pair in zip( current_position, original_position) ] # return an array of 4 1s or 0s - 1 if the corner is in the right position and 0 if not
+
+    # check if we need to permute the corners clockwise or anticlockwise
+            self.move("B")
+            original_position = [ self.locate_piece( 1 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
+            current_position  = [ self.locate_piece( 0 , piece[0] , piece[1] , b_col ) for piece in piece_colours]
+                   
+            corners_check = [ 1 if pair[0] == pair[1] else 0 for pair in zip( current_position, original_position) ]
+            if sum(corners_check) == 2 :
+                permute_clockwise = True
+            else:
+                permute_clockwise = False
+            self.move("B'") # move back     
+
+    # make a dict that we give the position of the correct corner (in the corners_in_place array), and whether the other ones need to permuted clockwise (True) or anticlockwise (False)
+            move_and_direction = { (0,True):"L", (0,False):"U", (1,True):"D", (1,False):"L", (2,True):"R", (2,False):"D", (3,True):"U", (3,False):"R" }
+            position = corners_in_place.index(1)
+            if permute_clockwise :
+                self.permute_corners_clockwise( move_and_direction[ ( position, permute_clockwise ) ] )
+                print('clockwise') # !!! NOT WORKING YET
+            else:
+                self.permute_corners_anticlockwise( move_and_direction[ ( position, permute_clockwise ) ] )
+                print('anticlockwise')
+
+# reorient the corners
+
+        self.twist("L",3)
+        self.twist("L",3) # turn the cube over so the back is facing us - now we can flip the edges
+        self.corner_flip()
+        self.twist("R",3)
+        self.twist("R",3)
 
 
 
@@ -593,7 +624,7 @@ class Cube:
         self.scramble()
         self.scramble()
         self.scramble()
-        # self.scramble()
+        self.scramble()
         # self.scramble()
         # self.scramble()
 
@@ -611,7 +642,7 @@ class Cube:
         self.bottom_cross()
         self.print_cube()
         self.solve_bottom_corners()
-        # self.print_cube()
+        self.print_cube()
         print(len(self.solution))
         print(" ".join(self.solution))
 
@@ -620,7 +651,7 @@ class Cube:
 
 c=Cube()
 # c.print_cube()
-# c.permute_corners_anticlockwise("D")
+c.permute_corners_clockwise("D")
 # c.print_cube()
 c.solve()
 # solution=c.solution
