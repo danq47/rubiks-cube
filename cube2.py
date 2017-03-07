@@ -19,8 +19,9 @@ class Cube:
 
     # often we wish to know which face is opposite the one we are currently dealing with
     opposites = { "U":"D", "D":"U", "L":"R", "R":"L", "F":"B", "B":"F" }
+    
 
-    # ---- 1. Initialise a cube, and also define some useful global variables
+    # ----- 1. Initialise a cube, and also define some useful global variables
     def __init__(self):
 
         # ----- 1.1 Build an empty cube -----
@@ -56,7 +57,31 @@ class Cube:
         self.z_anticlockwise = [ [0,-1,0], [1,0,0], [0,0,1] ]
         self.rotation_matrices = [self.x_clockwise,self.x_anticlockwise,self.y_clockwise,self.y_anticlockwise,self.z_clockwise,self.z_anticlockwise]
     
-    # ----- 2. Define twists on the faces of the cube -----
+        # 1.7 Dict to get the associated face for a colour or vice versa
+        self.faces_to_colours = { self.r_col:"R", self.d_col:"D", self.l_col:"L", self.u_col:"U" , "R":self.r_col, "D":self.d_col, "L":self.l_col, "U":self.u_col }
+
+    # ----- 2. Print cube -----
+    def print_cube(self):
+        # will be unfolded like 
+        #   U
+        #  LFRB
+        #   D
+        l_face = [ [ abs( self.cube[ 0, 2-y, 2-z ][0] ) for y in range(3) ] for z in range(3) ]
+        f_face = [ [ abs( self.cube[ x , 0 , 2-z ][1] ) for x in range(3) ] for z in range(3) ]
+        r_face = [ [ abs( self.cube[ 2 , y , 2-z ][0] ) for y in range(3) ] for z in range(3) ]
+        b_face = [ [ abs( self.cube[ 2-x, 2, 2-z ][1] ) for x in range(3) ] for z in range(3) ]
+        u_face = [ [ abs( self.cube[ x , 2-y , 2 ][2] ) for x in range(3) ] for y in range(3) ]
+        d_face = [ [ abs( self.cube[ x , y , 0   ][2] ) for x in range(3) ] for y in range(3) ]
+
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        for _ in range(3) :
+            print("         ", u_face[_])
+        for _ in range(3) :
+            print( l_face[_] , f_face[_] , r_face[_], b_face[_] )
+        for _ in range(3) :
+            print("         ", d_face[_])
+
+    # ----- 3. Define twists on the faces of the cube -----
     def twist(self,face,clockwise=True,save_move=True): 
 
         # method to twist around a given face. Optional arguments are 
@@ -94,7 +119,15 @@ class Cube:
         # ----- 2.5 Set the main cube equal to the copied cube (which we have been twisting)
         self.cube = new_cube
 
-    # ----- 3. Combinations of moves -----
+    # ----- 4. Scramble cube -----
+    def scramble(self):
+        rd.seed(a=0) # set random seed for reproducability 
+        for _ in range( rd.randint(20,40) ) :
+            face , clockwise = rd.choice(["F","B","L","R","U","D"]) , rd.choice([0,1]) # choose a random face and turn it either clockwise or anticlockwise
+            save_move = False
+            self.twist( face , clockwise , save_move ) 
+ 
+    # ----- 5. Combinations of moves -----
     def move_string(self, input_string):
         # This function takes a string of successive moves, and carries them out, i.e. FFDL does F(x2) then D then L
 
@@ -105,10 +138,64 @@ class Cube:
         for move in no_primes:
             self.twist( move )
 
-    # ----- 4. Find a certain piece -----
-    def find_piece(self, original, c1, c2=0, c3=0 ):
-        # This method will find the location of a piece if original is set to 0, or will find where it should be (i.e. the location on the original cube) if original is set to 1
+    # ----- 6. Find a certain piece -----
+    def find_piece(self, c1, c2=0, c3=0 ):
+        # Returns a list of 2 tuples, the coordinates of the piece now, and its location in the solved cube
         # It takes at least 1 colour as an input, but up to 3.
+        colours = abs( np.array( [ c1, c2, c3 ] ) ) # take absolute value as we don't care about orientation
+        colours = set( colours ) # we also don't care about the order so we convert to set
+        xyz_grid = [(x,y,z) for x in range(3) for y in range(3) for z in range(3)]
+
+        # We will find both the original location, and the current location, and return both
+        for xyz in xyz_grid :
+            if colours == set( abs( self.original_cube[ xyz ] ) ) : original = xyz
+            if colours == set( abs( self.cube[ xyz ] ) ) : current = xyz
+
+        return [ current, original ]
+
+    # ----- 7. Algorithms/moves -----
+
+    # ----- 7.1 Move edge pieces to back - we need this to make the intial cross. If the cross pieces are in the back face then we can just rotate B until it is in the appropriate position (i,e, L face for FL piece) then rotate LL
+    def edge_to_back( self, current_position ) :
+        [x,y,z] = current_position
+
+        if y == 0 : # piece is in the front, but the wrong position
+            face_to_turn = { (1,0):"D", (2,1):"R", (1,2):"U", (0,1):"L" } # choose which face to turn based on [x,z]
+            for _ in range(2) : self.twist( face_to_turn[(x,z)] ) # twist twice
+
+        elif y == 1 : # piece is in the middle layer
+            face_to_turn = { (2,0):"D", (2,2):"R", (0,2):"U", (0,0):"L"}
+            move_to_back = face_to_turn[(x,z)] + "B" + face_to_turn[(x,z)] + "'" # move it to the back, rotate it out of the way, then turn the other face back. This stops us messing up F
+            self.move_string( move_to_back )
+
+    # ----- 7.2 Make a cross on F -----
+    def make_cross(self):
+        pieces_of_cross = [ self.r_col, self.d_col, self.l_col, self.u_col ] # these are the pieces we need for the cross (along with f_col)
+        for piece in pieces_of_cross :
+
+            current_position, original_position = self.find_piece( self.f_col, piece )
+
+            if current_position != original_position :
+                if current_position[1] < 2 : # it's not yet in the back
+                    self.edge_to_back(current_position) 
+                    current_position = self.find_piece( self.f_col, piece )[0] # update current position of piece after moving it
+
+                # Now the piece is definitely in the back, we just need to rotate it to the right face, and then rotate into place
+                cxz = [ current_position[0], current_position[2] ] # current xz
+                oxz = [ original_position[0], original_position[2] ] # original xz
+                while cxz != oxz : # while not in the right face
+                    self.twist("B",1) # rotate
+                    current_position  = self.find_piece( self.f_col , piece )[0]
+                    cxz=[current_position[0],current_position[2]]
+
+                self.twist( self.faces_to_colours[piece] )
+                self.twist( self.faces_to_colours[piece] )
+
+
+
+
+
+
 
 
 
@@ -118,9 +205,20 @@ class Cube:
 
 
 c=Cube()
+# c.print_cube()
+# c.scramble()
+# c.make_cross()
+# c.print_cube()
 
-print(c.cube[0,0,2])
-c.twist("L")
-c.move_string("LLDD'L'L'L'")
-print(c.cube[0,0,2])
+# print(c.cube[:,0,:][:,1,:])
+
+# print(c.find_piece(1,2,3))
+# c.twist("L")
+# print(c.find_piece(1,2,3))
+# c.twist("B")
+# print(c.find_piece(1,2,3))
+# print(c.cube[0,0,2])
+# c.twist("L")
+# c.move_string("LLDD'L'L'L'")
+# print(c.cube[0,0,2])
 # print(c.u_col)
