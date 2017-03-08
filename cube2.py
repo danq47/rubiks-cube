@@ -33,9 +33,9 @@ class Cube:
 
         # ----- 1.2 Define the colours of the faces
         [ self.l_col, self.f_col, self.d_col, self.u_col, self.b_col, self.r_col ] = [1,2,3,4,5,6] # colours of the left, front, down etc faces explicitly set as numbers
-        x_colour = { 0:-self.l_col, 1:0, 2:self.r_col } # colours for the faces - x=0 layer (L) has colour -1 in the minus x direction, x=1 layer has no x colour, and x=2 layer (R) has colour 6 
-        y_colour = { 0:-self.f_col, 1:0, 2:self.b_col }
-        z_colour = { 0:-self.d_col, 1:0, 2:self.u_col }
+        x_colour = { 0:self.l_col, 1:0, 2:self.r_col } # colours for the faces - x=0 layer (L) has colour -1 in the minus x direction, x=1 layer has no x colour, and x=2 layer (R) has colour 6 
+        y_colour = { 0:self.f_col, 1:0, 2:self.b_col }
+        z_colour = { 0:self.d_col, 1:0, 2:self.u_col }
 
         # ----- 1.3 Set the face colours
         xyz_grid = [(x,y,z) for x in range(3) for y in range(3) for z in range(3)]
@@ -66,12 +66,12 @@ class Cube:
         #   U
         #  LFRB
         #   D
-        l_face = [ [ abs( self.cube[ 0, 2-y, 2-z ][0] ) for y in range(3) ] for z in range(3) ]
-        f_face = [ [ abs( self.cube[ x , 0 , 2-z ][1] ) for x in range(3) ] for z in range(3) ]
-        r_face = [ [ abs( self.cube[ 2 , y , 2-z ][0] ) for y in range(3) ] for z in range(3) ]
-        b_face = [ [ abs( self.cube[ 2-x, 2, 2-z ][1] ) for x in range(3) ] for z in range(3) ]
-        u_face = [ [ abs( self.cube[ x , 2-y , 2 ][2] ) for x in range(3) ] for y in range(3) ]
-        d_face = [ [ abs( self.cube[ x , y , 0   ][2] ) for x in range(3) ] for y in range(3) ]
+        l_face = [ [ self.cube[ 0, 2-y, 2-z ][0] for y in range(3) ] for z in range(3) ]
+        f_face = [ [ self.cube[ x , 0 , 2-z ][1] for x in range(3) ] for z in range(3) ]
+        r_face = [ [ self.cube[ 2 , y , 2-z ][0] for y in range(3) ] for z in range(3) ]
+        b_face = [ [ self.cube[ 2-x, 2, 2-z ][1] for x in range(3) ] for z in range(3) ]
+        u_face = [ [ self.cube[ x , 2-y , 2 ][2] for x in range(3) ] for y in range(3) ]
+        d_face = [ [ self.cube[ x , y , 0   ][2] for x in range(3) ] for y in range(3) ]
 
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         for _ in range(3) :
@@ -114,7 +114,7 @@ class Cube:
             cubie_colour_vector = self.cube[ xyz[0]+1, xyz[1]+1, xyz[2]+1 ] # colour vector of the piece before the twist - need to add ones as the loops run through (-1,0,1) whereas self.cube is defined on 0 <= x(or y or z) <= 2
 
             # ----- 2.4.3 Rotate the cubie, and move it to the destination coordinates
-            new_cube[ x1 +1, y1 +1, z1 +1 ] = np.dot( self.rotation_matrices[matrix_index], cubie_colour_vector ) # this second dot with the rotation matrix rotates the orientation of the cubie
+            new_cube[ x1 +1, y1 +1, z1 +1 ] = abs( np.dot( self.rotation_matrices[matrix_index], cubie_colour_vector ) ) # this second dot with the rotation matrix rotates the orientation of the cubie
 
         # ----- 2.5 Set the main cube equal to the copied cube (which we have been twisting)
         self.cube = new_cube
@@ -168,7 +168,12 @@ class Cube:
             move_to_back = face_to_turn[(x,z)] + "B" + face_to_turn[(x,z)] + "'" # move it to the back, rotate it out of the way, then turn the other face back. This stops us messing up F
             self.move_string( move_to_back )
 
-    # ----- 7.2 Make a cross on F -----
+    # ----- 7.2 Flip FD edge piece
+    def edge_flip(self):
+        move = "DR'B'RDD"
+        self.move_string(move)
+
+    # ----- 7.3 Make a cross on F -----
     def make_cross(self):
         pieces_of_cross = [ self.r_col, self.d_col, self.l_col, self.u_col ] # these are the pieces we need for the cross (along with f_col)
         for piece in pieces_of_cross :
@@ -192,6 +197,16 @@ class Cube:
                 self.twist( self.faces_to_colours[piece] )
 
 
+    # ----- 7.4 Reorient F_cross
+    def flip_F_cross(self):
+        ixx = 0 
+        while ixx < 4 :
+            if self.cube[1,0,0][1] != self.f_col : # check if it is oriented correctly
+                self.edge_flip()
+            self.twist("F") # move to next piece
+            ixx += 1 # do this a maximum of 4 times to get back to original state
+
+
 
 
 
@@ -205,10 +220,14 @@ class Cube:
 
 
 c=Cube()
-# c.print_cube()
-# c.scramble()
-# c.make_cross()
-# c.print_cube()
+c.print_cube()
+c.scramble()
+c.print_cube()
+c.make_cross()
+c.print_cube()
+c.flip_F_cross()
+c.print_cube()
+
 
 # print(c.cube[:,0,:][:,1,:])
 
