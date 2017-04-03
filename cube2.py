@@ -123,7 +123,7 @@ class Cube:
 
     # ----- 4. Scramble cube -----
     def scramble(self):
-        rd.seed(a=4) # set random seed for reproducability 
+        rd.seed(a=0) # set random seed for reproducability 
         for _ in range( rd.randint(20,40) ) :
             face , clockwise = rd.choice(["F","B","L","R","U","D"]) , rd.choice([0,1]) # choose a random face and turn it either clockwise or anticlockwise
             save_move = False
@@ -366,63 +366,41 @@ class Cube:
             self.bottom_cross_algo()
             self.bottom_cross_algo()
 
+    # ----- 8.7 put bottom cross pieces in right place
+    def bottom_cross_swap(self):
 
+        swap_algorithm="RBR'BRBBR'B"
 
+        def position_of_edges():
+            piece_colours = [ piece[0] for piece in self.corner_pieces ]
+            correct_position = []
+            for piece in piece_colours :
+                current_position, original_position = self.find_piece( piece, self.b_col )
+                correct_position.append( current_position == original_position)
+            return correct_position
 
+        # first check we don't already have the correct cross
+        ixx = 0
+        while ixx < 4 :
+            ixx += 1
+            if sum(position_of_edges()) == 4 :
+                break
+            else:
+                self.move_string("B")
 
+        ixx = 0
+        tmp = position_of_edges()
+        while tmp != [1,1,0,0] :
 
-        # first check if we've got a cross at all (even if we need to rotate B)
-        # cross = False
-        # ixx=0
-        # while ixx < 4 and cross == False :
-        #     current_position, original_position = self.find_piece( piece, self.b_col )
+            if ixx == 4 :
+                self.move_string(swap_algorithm)
 
-        #     if original_position == current_position : 
-        #         cross = True
-        #     else:
-        #         self.move("B")
-        #     ixx+=1
+            self.move_string("B")
+            ixx += 1
+            tmp = position_of_edges()
 
-        # # if we've got a cross, great, we'll just skip straight to the end stage (where we reorient the cross)
-        # if cross == False : # now we've got two cases - either we have a configuration where only one piece is in the right position (start position), and we can work with this, or else we can't get this 1 right position, and we will have to appply the algorithm twice
+        self.move_string(swap_algorithm)
 
-        #     start_position = False
-        #     while start_position == False :
-                
-        #         ixx = 0
-        #         while ixx < 4 and start_position == False :
-        #             current_position, original_position = self.find_piece( piece, self.b_col )
-        #             check_positions=0 # check how many of the cross pieces are in the right place
-                    
-        #             for _ in range(4):
-        #                 if original_position[_] == current_position[_] :
-        #                     check_positions += 1
-
-        #             if check_positions == 1 :
-        #                 start_position = True
-        #             else:
-        #                 self.move("B")
-        #             ixx+=1
-        #         # if we finish the inner while loop without a start position we can just do the algorithm and then we will definitely have a start position next time round
-        #         if start_position == False :
-        #             self.a2_right("U")
-
-        #     # now we're in a position to do the algorithm, we just need to work out which direction and which faces
-        #     start_face=""
-        #     for piece in piece_colours:
-        #         current_position, original_position = self.find_piece( piece, self.b_col )
-        #         if current_position == original_position :
-        #             start_face = self.faces_to_colours[piece]
-        #             break
-
-
-        #     start_right=False
-        #     self.move_string("B") # move to check which direction we should start the algorithm. if the opposite face has the piece in the right position then this is the wrong first move - we'll start the algorithm to the left instead
-        #     current, original = self.locate_piece( self.faces_to_colours [ self.opposites[ start_face ] ] , b_col) # this is checking the direction we permute the other 3 pieces
-        #     start_right = (current == original)# start the algorithm to the right if these are equivalent, and to the left if not
-        #     self.move_string("B'") # undo the checking move    
-
-        #     if start_right self.a2_right(start_face) else self.a2_left(start_face) 
 
 
 
@@ -437,7 +415,8 @@ class Cube:
         self.print_cube()
         self.bottom_cross()
         self.print_cube()
-
+        self.bottom_cross_swap()
+        self.print_cube()
         # print( len(self.solution), self.solution )
 
 
