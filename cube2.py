@@ -16,14 +16,7 @@ import random as rd
 # so the faces are defined by the planes F:y=0, B:y=2, L:x=0, R:x=2, D:z=0, U:z=2
 
 class Cube:
-
-    # often we wish to know which face is opposite the one we are currently dealing with
-    opposites = { "U":"D", "D":"U", "L":"R", "R":"L", "F":"B", "B":"F" }
-    face_to_right = { "D":"R", "R":"U", "U":"L", "L":"D" }
-    face_to_left = { "D":"L", "L":"U", "U":"R", "R":"D" }
-    
-    
-
+  
     # ----- 1. Initialise a cube, and also define some useful global variables
     def __init__(self):
 
@@ -62,6 +55,12 @@ class Cube:
     
         # 1.7 Dict to get the associated face for a colour or vice versa
         self.faces_to_colours = { self.r_col:"R", self.d_col:"D", self.l_col:"L", self.u_col:"U" , "R":self.r_col, "D":self.d_col, "L":self.l_col, "U":self.u_col }
+        self.corner_pieces = [ [self.r_col,self.d_col], [self.d_col,self.l_col], [self.l_col,self.u_col], [self.u_col,self.r_col] ]
+        # often we wish to know which face is opposite the one we are currently dealing with
+        self.opposites = { "U":"D", "D":"U", "L":"R", "R":"L", "F":"B", "B":"F" }
+        # we use these dicts for doing the a1_left/right algorithms
+        self.face_to_right = { "D":"R", "R":"U", "U":"L", "L":"D" }
+        self.face_to_left = { "D":"L", "L":"U", "U":"R", "R":"D" }
 
     # ----- 2. Print cube -----
     def print_cube(self):
@@ -124,7 +123,7 @@ class Cube:
 
     # ----- 4. Scramble cube -----
     def scramble(self):
-        rd.seed(a=0) # set random seed for reproducability 
+        rd.seed(a=4) # set random seed for reproducability 
         for _ in range( rd.randint(20,40) ) :
             face , clockwise = rd.choice(["F","B","L","R","U","D"]) , rd.choice([0,1]) # choose a random face and turn it either clockwise or anticlockwise
             save_move = False
@@ -171,6 +170,12 @@ class Cube:
             move_to_back = face_to_turn[(x,z)] + "B" + face_to_turn[(x,z)] + "'" # move it to the back, rotate it out of the way, then turn the other face back. This stops us messing up F
             self.move_string( move_to_back )
 
+    # ----- 7.2 Move from middle layer to back (to do a1_left/right)
+    def middle_layer_to_back(self,position): 
+        [x,y,z] = position
+        face_to_move = { (2,0):"D", (2,2):"R" , (0,2):"U" , (0,0):"L" } # choose which face to turn based on [x,z]
+        self.a1_right(face_to_move[(x,z)])
+
     # ----- 7.2 Flip FD edge piece
     def edge_flip(self):
         move = "DR'B'RDD"
@@ -200,34 +205,35 @@ class Cube:
         # This is the main algorithm, used to fill the second layer
         # It involves two faces, input_face, and the face to the left
         self.left_corner(input_face)
-        self.right_corner( face_to_left[input_face] )
+        self.right_corner( self.face_to_left[input_face] )
 
     # ----- 7.6 A1 Right
     def a1_right(self, input_face):
         # same as above but putting a piece in the middle layer to the right rather than the left
         self.right_corner(input_face)
-        self.left_corner( face_to_right[input_face] )
+        self.left_corner( self.face_to_right[input_face] )
 
     def a2_left(self, input_face):
         # a1_left followed by a1_right
         self.a1_left(input_face)
         self.twist("B")
-        self.a1_right( face_to_left[input_face] )
+        self.a1_right( self.face_to_left[input_face] )
 
     def a2_right(self, input_face):
         # a1_left followed by a1_right
         self.a1_left(input_face)
         self.twist("B'")
-        self.a1_right( face_to_right[input_face] )
+        self.a1_right( self.face_to_right[input_face] )
 
-    # def a3_left(self, input_face):
-    #     # a2 left followed by a2 right, for orienting the corners correctly
+    def bottom_cross_algo(self):
+        # reorient bottom cross pieces
+        self.move_string("URBR'B'U'")
         
     # ----- 8. Steps to solve the cube
 
     # ----- 8.1 Make a cross on F -----
     def make_F_cross(self):
-        pieces_of_cross = [ self.r_col, self.d_col, self.l_col, self.u_col ] # these are the pieces we need for the cross (along with f_col)
+        pieces_of_cross = [ piece[0] for piece in self.corner_pieces ] # these are the pieces we need for the cross (along with f_col)
         for piece in pieces_of_cross :
 
             current_position, original_position = self.find_piece( self.f_col, piece )
@@ -260,9 +266,7 @@ class Cube:
     # ----- 8.3 Solve top corners ------
     def solve_top_corners(self):
         # ------ 8.3.1 These will be the colours of the 4 corner pieces (along with f_col obviously)
-        corner_pieces = [ [self.r_col,self.d_col], [self.d_col,self.l_col], \
-        [self.l_col,self.u_col], [self.u_col,self.r_col] ]
-        for piece in corner_pieces :
+        for piece in self.corner_pieces :
 
             current_position, original_position = self.find_piece( self.f_col, *piece ) # *piece means that the elements of piece are arguments of the function
 
@@ -296,12 +300,145 @@ class Cube:
             self.move_string("F'")
             ixx += 1
 
+    # ---- 8.5 Solve Middle layer
+    def second_layer(self):
+        start_algorithm = { self.r_col:(2,1) , self.u_col:(1,2) , self.l_col:(0,1) , self.d_col:(1,0) }  # this is the position we need to get each piece into before performing a1_right()
+        face_to_twist = { (1,0):"D" , (2,1):"R" , (1,2):"U" , (0,1):"L" }
+
+        for piece in self.corner_pieces :
+            current_position, original_position = self.find_piece( *piece )
+
+            if current_position != original_position :
+                # 8.5.1 If the piece is already in the middle layer, then move to the back
+                if current_position[1] == 1 :
+                    self.middle_layer_to_back(current_position)
+                    current_position, original_position = self.find_piece( *piece )
+
+                # 8.5.2 Now it's in the back, move to the correct mid layer position
+                cxz = ( current_position[0] , current_position[2] )
+                while cxz != start_algorithm[piece[0]] : # while the piece isn't in the correct position in the back layer
+                    self.twist("B")
+                    current_position, original_position = self.find_piece( *piece )
+                    cxz = ( current_position[0] , current_position[2] )
+                # it's in the right position, now just need to do algorithm a1
+                self.a1_left( face_to_twist[cxz] )
+
+            # Now they are all in the right place, just need to check they are oriented correctly
+            oriented_correctly = all( self.cube[original_position] == self.original_cube[original_position] )
+            if not oriented_correctly:
+                face = self.faces_to_colours[ piece[0] ]
+                self.a1_left(face)
+                self.move_string("BB")
+                self.a1_left(face)
+
+
+    # ----- 8.6 Make a cross on the bottom layer
+    def bottom_cross(self):
+        piece_colours = [ piece[0] for piece in self.corner_pieces ]
+        orientations = []
+        # Want to make a cross on the B layer oriented correctly (we don't need the pieces in the right place in this step, we will move them next)
+        # Different possibilities are
+        # (1) Already there
+        # (2) none are oriented right
+        # (3) veritcal line shape, 2 and 8 
+        # (4) horizontal line, 4 and 6
+        # (5) L shape i.e. pieces 2 and 4 or 2 and 6 etc are oriented right
+        # we will make an array of the 6 2 4 8 orientations (true is correct and false is incorrect) on the B face
+        for piece in piece_colours :
+            current_position, original_position = self.find_piece( piece, self.b_col )
+            orientations.append( self.cube[original_position][1] == self.b_col) 
+
+        if sum(orientations) == 4:
+            pass
+        elif sum(orientations) == 0:
+            self.bottom_cross_algo()
+            self.move_string("BB")
+            self.bottom_cross_algo()
+        elif orientations == [0,1,0,1] :
+            self.move_string("B")
+            self.bottom_cross_algo()
+        elif orientations == [1,0,1,0] :
+            self.bottom_cross_algo()
+        else:
+            while orientations != [0,1,1,0] :
+                self.move_string("B")
+                orientations.append( orientations.pop(0) ) # update the orientations by cycling through once
+            self.bottom_cross_algo()
+            self.bottom_cross_algo()
+
+
+
+
+
+
+        # first check if we've got a cross at all (even if we need to rotate B)
+        # cross = False
+        # ixx=0
+        # while ixx < 4 and cross == False :
+        #     current_position, original_position = self.find_piece( piece, self.b_col )
+
+        #     if original_position == current_position : 
+        #         cross = True
+        #     else:
+        #         self.move("B")
+        #     ixx+=1
+
+        # # if we've got a cross, great, we'll just skip straight to the end stage (where we reorient the cross)
+        # if cross == False : # now we've got two cases - either we have a configuration where only one piece is in the right position (start position), and we can work with this, or else we can't get this 1 right position, and we will have to appply the algorithm twice
+
+        #     start_position = False
+        #     while start_position == False :
+                
+        #         ixx = 0
+        #         while ixx < 4 and start_position == False :
+        #             current_position, original_position = self.find_piece( piece, self.b_col )
+        #             check_positions=0 # check how many of the cross pieces are in the right place
+                    
+        #             for _ in range(4):
+        #                 if original_position[_] == current_position[_] :
+        #                     check_positions += 1
+
+        #             if check_positions == 1 :
+        #                 start_position = True
+        #             else:
+        #                 self.move("B")
+        #             ixx+=1
+        #         # if we finish the inner while loop without a start position we can just do the algorithm and then we will definitely have a start position next time round
+        #         if start_position == False :
+        #             self.a2_right("U")
+
+        #     # now we're in a position to do the algorithm, we just need to work out which direction and which faces
+        #     start_face=""
+        #     for piece in piece_colours:
+        #         current_position, original_position = self.find_piece( piece, self.b_col )
+        #         if current_position == original_position :
+        #             start_face = self.faces_to_colours[piece]
+        #             break
+
+
+        #     start_right=False
+        #     self.move_string("B") # move to check which direction we should start the algorithm. if the opposite face has the piece in the right position then this is the wrong first move - we'll start the algorithm to the left instead
+        #     current, original = self.locate_piece( self.faces_to_colours [ self.opposites[ start_face ] ] , b_col) # this is checking the direction we permute the other 3 pieces
+        #     start_right = (current == original)# start the algorithm to the right if these are equivalent, and to the left if not
+        #     self.move_string("B'") # undo the checking move    
+
+        #     if start_right self.a2_right(start_face) else self.a2_left(start_face) 
+
+
 
 
 
     def solve(self):
-        self.make_cross()
+        self.make_F_cross()
         self.flip_F_cross()
+        self.solve_top_corners()
+        self.corner_flip()
+        self.second_layer()
+        self.print_cube()
+        self.bottom_cross()
+        self.print_cube()
+
+        # print( len(self.solution), self.solution )
 
 
 
@@ -318,14 +455,7 @@ class Cube:
 c=Cube()
 c.print_cube()
 c.scramble()
-c.print_cube()
-c.make_F_cross()
-c.print_cube()
-c.flip_F_cross()
-c.print_cube()
-c.solve_top_corners()
-c.corner_flip()
-c.print_cube()
+c.solve()
 
 
 # print(c.cube[:,0,:][:,1,:])
