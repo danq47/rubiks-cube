@@ -225,9 +225,6 @@ class Cube:
         self.twist("B'")
         self.a1_right( self.face_to_right[input_face] )
 
-    def bottom_cross_algo(self):
-        # reorient bottom cross pieces
-        self.move_string("URBR'B'U'")
         
     # ----- 8. Steps to solve the cube
 
@@ -334,8 +331,17 @@ class Cube:
 
     # ----- 8.6 Make a cross on the bottom layer
     def bottom_cross(self):
+        b_cross_algorithm = "URBR'B'U'"
         piece_colours = [ piece[0] for piece in self.corner_pieces ]
-        orientations = []
+
+        def get_orientations():
+            # returns a list of the orientations of [ R, D, L, U ] edges (with B face) where we have 1 for correct orientation and 0 for incorrect. This is pieces 4 8 6 2 when looking at B.
+            orientations = []
+            for piece in piece_colours :
+                current_position, original_position = self.find_piece( piece, self.b_col )
+                orientations.append( self.cube[original_position][1] == self.b_col) 
+            return orientations
+
         # Want to make a cross on the B layer oriented correctly (we don't need the pieces in the right place in this step, we will move them next)
         # Different possibilities are
         # (1) Already there
@@ -343,36 +349,29 @@ class Cube:
         # (3) veritcal line shape, 2 and 8 
         # (4) horizontal line, 4 and 6
         # (5) L shape i.e. pieces 2 and 4 or 2 and 6 etc are oriented right
-        # we will make an array of the 6 2 4 8 orientations (true is correct and false is incorrect) on the B face
-        for piece in piece_colours :
-            current_position, original_position = self.find_piece( piece, self.b_col )
-            orientations.append( self.cube[original_position][1] == self.b_col) 
 
-        if sum(orientations) == 4:
+        if sum( get_orientations() ) == 4:
             pass
-        elif sum(orientations) == 0:
-            self.bottom_cross_algo()
-            self.move_string("BB")
-            self.bottom_cross_algo()
-        elif orientations == [0,1,0,1] :
+        elif sum( get_orientations() ) == 0:
+            self.move_string( b_cross_algorithm ) # do the algorithm randomly so we flip 2 pieces
+
+
+        if get_orientations() == [0,1,0,1] :
             self.move_string("B")
-            self.bottom_cross_algo()
-        elif orientations == [1,0,1,0] :
-            self.bottom_cross_algo()
+            self.move_string( b_cross_algorithm )
+        elif get_orientations() == [1,0,1,0] :
+            self.move_string( b_cross_algorithm )
         else:
-            while orientations != [0,1,1,0] :
+            while get_orientations() != [0,1,1,0] :
                 self.move_string("B")
-                orientations.append( orientations.pop(0) ) # update the orientations by cycling through once
-            self.bottom_cross_algo()
-            self.bottom_cross_algo()
+            self.move_string( b_cross_algorithm )
+            self.move_string( b_cross_algorithm )
 
     # ----- 8.7 put bottom cross pieces in right place
     def bottom_cross_swap(self):
 
-        # swap_algo = "RBR'BRBBR'B"
-
         def position_of_edges():
-            # 
+            # returns a list [ R, D, L, U ] edges on the bottom, with a 1 if the RB edge piece (for example) is in the correct position
             piece_colours = [ piece[0] for piece in self.corner_pieces ] # R D L U i.e. when looking at B this is pieces 4 8 6 2
             correct_position = []
             for piece in piece_colours :
@@ -409,6 +408,40 @@ class Cube:
         self.move_string( algo )
 
 
+    # ----- 8.8 put B corner pieces in place
+    def bottom_corners(self):
+
+        def position_of_corners():
+            # returns a list [ RDB, DLB, LUB, URB ] corners with a 1 corner piece is in the right position
+            correct_position = []
+            for piece in self.corner_pieces : # this will be corner pieces 7 9 3 1 when looking at B
+                current_position, original_position = self.find_piece( self.b_col, *piece )
+                correct_position.append( current_position == original_position)
+            return correct_position
+
+
+        if sum( position_of_corners() ) == 4 : # all corners are in right place
+            pass
+        elif sum( position_of_corners() ) == 0 :
+            self.move_string( "BRB'L'BR'B'L" )
+
+        if position_of_corners() == [1,0,0,0] : # RDB corner is in place
+            face = ["D","U"]
+        elif position_of_corners() == [0,1,0,0]: # DLB corner is in place
+            face = ["L","R"]
+        elif position_of_corners() == [0,0,1,0]: # LUB corner is in place
+            face = ["U","D"]
+        elif position_of_corners() == [0,0,0,1]: # URB corner is in place
+            face = ["R","L"]
+
+        algorithm = "B" + face[0] + "B'" + face[1] + "'B" + face[0] + "'B'" + face[1]
+
+        while sum( position_of_corners() ) != 4 :
+            self.move_string( algorithm )
+
+
+
+
 
 
 
@@ -429,6 +462,8 @@ class Cube:
         self.bottom_cross()
         # self.print_cube()
         self.bottom_cross_swap()
+        # self.print_cube()
+        self.bottom_corners()
         self.print_cube()
         # print( len(self.solution), self.solution )
 
@@ -442,7 +477,7 @@ class Cube:
 
 
 c = Cube()
-c.scramble()
+c.scramble(1)
 c.solve()
 
 # for kxx in range(100):
