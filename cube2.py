@@ -55,7 +55,7 @@ class Cube:
     
         # 1.7 Dict to get the associated face for a colour or vice versa
         self.faces_to_colours = { self.r_col:"R", self.d_col:"D", self.l_col:"L", self.u_col:"U" , "R":self.r_col, "D":self.d_col, "L":self.l_col, "U":self.u_col }
-        self.corner_pieces = [ [self.r_col,self.d_col], [self.d_col,self.l_col], [self.l_col,self.u_col], [self.u_col,self.r_col] ]
+        self.corner_pieces = [ [self.r_col,self.d_col], [self.d_col,self.l_col], [self.l_col,self.u_col], [self.u_col,self.r_col] ] # when looking at B face, this is the corners 7 9 3 1
         # often we wish to know which face is opposite the one we are currently dealing with
         self.opposites = { "U":"D", "D":"U", "L":"R", "R":"L", "F":"B", "B":"F" }
         # we use these dicts for doing the a1_left/right algorithms
@@ -122,8 +122,8 @@ class Cube:
         self.cube = new_cube
 
     # ----- 4. Scramble cube -----
-    def scramble(self):
-        rd.seed(a=0) # set random seed for reproducability 
+    def scramble(self,a=0):
+        rd.seed(a) # set random seed for reproducability 
         for _ in range( rd.randint(20,40) ) :
             face , clockwise = rd.choice(["F","B","L","R","U","D"]) , rd.choice([0,1]) # choose a random face and turn it either clockwise or anticlockwise
             save_move = False
@@ -369,10 +369,11 @@ class Cube:
     # ----- 8.7 put bottom cross pieces in right place
     def bottom_cross_swap(self):
 
-        swap_algorithm="RBR'BRBBR'B"
+        # swap_algo = "RBR'BRBBR'B"
 
         def position_of_edges():
-            piece_colours = [ piece[0] for piece in self.corner_pieces ]
+            # 
+            piece_colours = [ piece[0] for piece in self.corner_pieces ] # R D L U i.e. when looking at B this is pieces 4 8 6 2
             correct_position = []
             for piece in piece_colours :
                 current_position, original_position = self.find_piece( piece, self.b_col )
@@ -388,18 +389,29 @@ class Cube:
             else:
                 self.move_string("B")
 
+        valid_starting_position = [ [1,1,0,0], [0,1,1,0], [0,0,1,1], [1,0,0,1] ] # if position_of_edges() equals any of these, then we can do the algorithm. Basically, we need two adjacent edges correct and the other two swapped 
+        algorithm_face = { (1,1,0,0):"R", (0,1,1,0):"D", (0,0,1,1):"L", (1,0,0,1):"U" } # the face we twist in the algorithm depends on which edge pieces are adjacent
+
         ixx = 0
         tmp = position_of_edges()
-        while tmp != [1,1,0,0] :
+        while tmp not in valid_starting_position :
 
-            if ixx == 4 :
-                self.move_string(swap_algorithm)
+            if ixx % 4 == 0 :
+                self.move_string( "RBR'BRBBR'B" ) # If none of the positions are in valid_starting_position, do the algorithm randomly and next time one should be valid
 
-            self.move_string("B")
+            self.move_string("B") # twist B, then check again if we can start the algorithm
             ixx += 1
             tmp = position_of_edges()
 
-        self.move_string(swap_algorithm)
+        face = algorithm_face[ tuple(tmp) ] # figure out which face we use for the algorithm
+        algo = face + "B" + face + "'B" + face + "BB" + face + "'B" # build the algorigthm using the correct face
+
+        self.move_string( algo )
+
+
+
+
+
 
 
 
@@ -407,14 +419,15 @@ class Cube:
 
 
     def solve(self):
+
         self.make_F_cross()
         self.flip_F_cross()
         self.solve_top_corners()
         self.corner_flip()
         self.second_layer()
-        self.print_cube()
+        # self.print_cube()  
         self.bottom_cross()
-        self.print_cube()
+        # self.print_cube()
         self.bottom_cross_swap()
         self.print_cube()
         # print( len(self.solution), self.solution )
@@ -428,13 +441,16 @@ class Cube:
 
 
 
-
-
-
-c=Cube()
-c.print_cube()
+c = Cube()
 c.scramble()
 c.solve()
+
+# for kxx in range(100):
+#     c=Cube()
+# # c.print_cube()
+#     c.scramble(kxx)
+#     c.solve()
+
 
 
 # print(c.cube[:,0,:][:,1,:])
