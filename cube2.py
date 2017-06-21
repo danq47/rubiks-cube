@@ -3,9 +3,6 @@
 import numpy as np
 import random as rd
 
-
-
-
 # We will represent the cube as a numpy array where we can access each
 # individual cubie by cube[x,y,z]. This will return us a colour vector [cx,cy,cz]
 # which tells us the colour in the x,y,z directions (numbered
@@ -251,6 +248,15 @@ class Cube:
                 self.twist( self.faces_to_colours[piece] )
                 self.twist( self.faces_to_colours[piece] )
 
+        # manually check that we do have the cross
+        for piece in pieces_of_cross :
+            current_position, original_position = self.find_piece( self.f_col, piece )
+            if current_position != original_position :
+                print("Error")
+                print("Couldn't build cross on F-face")
+                print("Exiting...")
+                exit()
+
     # ----- 8.2 Reorient F_cross ------
     def flip_F_cross(self):
         ixx = 0 
@@ -259,6 +265,19 @@ class Cube:
                 self.edge_flip()
             self.twist("F") # move to next piece
             ixx += 1 # do this a maximum of 4 times to get back to original state
+
+        # check 
+        ixx = 0 
+        while ixx < 4 :
+            if self.cube[1,0,0][1] != self.f_col : # check if it is oriented correctly
+                print("Error")
+                print("Couldn't reorient F-cross properly")
+                print("Exiting...")
+                exit()
+            self.twist("F")
+            ixx += 1
+
+
 
     # ----- 8.3 Solve top corners ------
     def solve_top_corners(self):
@@ -286,6 +305,15 @@ class Cube:
                 # ----- 8.3.4 It's in the right place, just put it in with right_corner()
                 self.right_corner( self.faces_to_colours[ piece[1] ] )
 
+        # check
+        for piece in self.corner_pieces :
+            current_position, original_position = self.find_piece( self.f_col, *piece )
+            if current_position != original_position :
+                print("Error")
+                print("F corners not correct")
+                print("Exiting...")
+                exit()
+
     # ----- 8.4 Reorient top corners
     def corner_flip(self):
         # reorient the bottom right corner on F
@@ -296,6 +324,18 @@ class Cube:
                 self.move_string(corner_flip_algo)
             self.move_string("F'")
             ixx += 1
+
+        # check
+        ixx=0
+        while ixx < 4:
+            if self.cube[2,0,0][1] != self.f_col :
+                print("Error")
+                print("F corners not oriented correctly")
+                print("Exiting...")
+                exit()
+            self.twist("F")
+            ixx += 1
+                
 
     # ---- 8.5 Solve Middle layer
     def second_layer(self):
@@ -327,6 +367,15 @@ class Cube:
                 self.a1_left(face)
                 self.move_string("BB")
                 self.a1_left(face)
+
+        # check
+        for piece in self.corner_pieces :
+            current_position, original_position = self.find_piece( *piece )
+            if current_position != original_position :
+                print("Error")
+                print("Second layer edge pieces not in correct position")
+                print("Exiting...")
+                exit()
 
 
     # ----- 8.6 Make a cross on the bottom layer
@@ -361,11 +410,22 @@ class Cube:
             self.move_string( b_cross_algorithm )
         elif get_orientations() == [1,0,1,0] :
             self.move_string( b_cross_algorithm )
-        else:
+        elif sum( get_orientations() ) != 4 : # don't need to do anything if they're all already oriented correctly
             while get_orientations() != [0,1,1,0] :
                 self.move_string("B")
             self.move_string( b_cross_algorithm )
             self.move_string( b_cross_algorithm )
+
+        # check
+        ixx = 0 
+        while ixx < 4 :
+            if self.cube[1,2,0][1] != self.b_col : # check if it is oriented correctly
+                print("Error")
+                print("B-cross not oriented properly")
+                print("Exiting...")
+                exit()
+            self.twist("B")
+            ixx += 1
 
     # ----- 8.7 put bottom cross pieces in right place
     def bottom_cross_swap(self):
@@ -407,6 +467,15 @@ class Cube:
 
         self.move_string( algo )
 
+        # check
+        piece_colours = [ piece[0] for piece in self.corner_pieces ]
+        for piece in piece_colours :
+            current_position, original_position = self.find_piece( piece, self.b_col )
+            if current_position != original_position :
+                print("Error")
+                print("B-cross pieces not in correct positions")
+                print("Exiting...")
+                exit()
 
     # ----- 8.8 put B corner pieces in place, very similar to moving around the edge pieces
     def bottom_corners(self):
@@ -425,6 +494,8 @@ class Cube:
         elif sum( position_of_corners() ) == 0 :
             self.move_string( "BRB'L'BR'B'L" )
 
+        face = ["",""]
+
         if position_of_corners() == [1,0,0,0] : # RDB corner is in place
             face = ["D","U"]
         elif position_of_corners() == [0,1,0,0]: # DLB corner is in place
@@ -439,13 +510,22 @@ class Cube:
         while sum( position_of_corners() ) != 4 :
             self.move_string( algorithm )
 
+        # check
+        for piece in self.corner_pieces : # this will be corner pieces 7 9 3 1 when looking at B
+            current_position, original_position = self.find_piece( self.b_col, *piece )
+            if current_position != original_position :
+                print("Error")
+                print("B-corner pieces not in correct position")
+                print("Exiting...")
+                exit()
+
 
     # 8.9 The final bit, now that the corners are in the right places we just need to reorient them
     def reorient_bottom_corners(self):
         # reorient the bottom right corner of the B face (piece 9 if looking at the face)
         moves_to_undo = []
         algorithm = "LD'L'DLD'L'D"
-        
+
         ixx = 0
         while ixx < 4 :
             while self.cube[0,2,0][1] != self.b_col : # not oriented correctly
@@ -455,6 +535,17 @@ class Cube:
             ixx += 1
 
         self.move_string( ''.join(moves_to_undo) )
+
+        # check
+        ixx = 0
+        while ixx < 4 :
+            if self.cube[0,2,0][1] != self.b_col :
+                print("Error")
+                print("B-corner pieces not oriented correctly")
+                print("Exiting...")
+                exit()
+            self.move_string("B'")
+            ixx += 1
 
 
 
@@ -474,14 +565,10 @@ class Cube:
         self.flip_F_cross()
         self.solve_top_corners()
         self.corner_flip()
-        self.second_layer()
-        # self.print_cube()  
+        self.second_layer() 
         self.bottom_cross()
-        # self.print_cube()
         self.bottom_cross_swap()
-        # self.print_cube()
         self.bottom_corners()
-        # self.print_cube()
         self.reorient_bottom_corners()
         self.print_cube()
         # print( len(self.solution), self.solution )
@@ -496,14 +583,15 @@ class Cube:
 
 
 c = Cube()
-c.scramble(1)
+c.scramble(4)
 c.solve()
 
-# for kxx in range(100):
-#     c=Cube()
-# # c.print_cube()
-#     c.scramble(kxx)
-#     c.solve()
+for kxx in range(10000):
+    print(kxx)
+    c=Cube()
+# c.print_cube()
+    c.scramble(kxx)
+    c.solve()
 
 
 
