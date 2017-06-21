@@ -403,12 +403,12 @@ class Cube:
             tmp = position_of_edges()
 
         face = algorithm_face[ tuple(tmp) ] # figure out which face we use for the algorithm
-        algo = face + "B" + face + "'B" + face + "BB" + face + "'B" # build the algorigthm using the correct face
+        algo = face + "B" + face + "'B" + face + "BB" + face + "'B" # build the algorithm using the correct face
 
         self.move_string( algo )
 
 
-    # ----- 8.8 put B corner pieces in place
+    # ----- 8.8 put B corner pieces in place, very similar to moving around the edge pieces
     def bottom_corners(self):
 
         def position_of_corners():
@@ -440,6 +440,23 @@ class Cube:
             self.move_string( algorithm )
 
 
+    # 8.9 The final bit, now that the corners are in the right places we just need to reorient them
+    def reorient_bottom_corners(self):
+        # reorient the bottom right corner of the B face (piece 9 if looking at the face)
+        moves_to_undo = []
+        algorithm = "LD'L'DLD'L'D"
+        
+        ixx = 0
+        while ixx < 4 :
+            while self.cube[0,2,0][1] != self.b_col : # not oriented correctly
+                self.move_string( algorithm )
+            self.move_string("B'")
+            moves_to_undo.append("B")
+            ixx += 1
+
+        self.move_string( ''.join(moves_to_undo) )
+
+
 
 
 
@@ -464,6 +481,8 @@ class Cube:
         self.bottom_cross_swap()
         # self.print_cube()
         self.bottom_corners()
+        # self.print_cube()
+        self.reorient_bottom_corners()
         self.print_cube()
         # print( len(self.solution), self.solution )
 
